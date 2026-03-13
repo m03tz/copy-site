@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Next.js Dev",
+      "runtimeExecutable": "D:\\node.js\\node.exe",
+      "runtimeArgs": [
+        "D:\\doctor site\\node_modules\\.pnpm\\next@15.5.12_react-dom@19.2.4_react@19.2.4__react@19.2.4\\node_modules\\next\\dist\\bin\\next",
+        "dev",
+        "--port",
+        "3004"
+      ],
+      "port": 3004,
+      "autoPort": false
+    }
+  ]
+}

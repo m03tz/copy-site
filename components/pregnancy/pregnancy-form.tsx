@@ -1,0 +1,174 @@
+'use client'
+
+import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { Button } from '@/components/ui/button'
+import { DatePickerInput } from '@/components/ui/date-picker-input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { createPregnancy } from '@/lib/actions/pregnancies'
+import { Plus } from 'lucide-react'
+
+// ─── Validation schema ────────────────────────────────────────────────────────
+
+const pregnancyFormSchema = z.object({
+  lmp_date: z.string().min(1, 'LMP date is required'),
+  baby_gender: z.enum(['male', 'female', '']).optional(),
+  notes: z.string().optional(),
+})
+
+type PregnancyFormValues = z.infer<typeof pregnancyFormSchema>
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+interface PregnancyFormProps {
+  patientId: string
+}
+
+export function PregnancyForm({ patientId }: PregnancyFormProps) {
+  const t = useTranslations('pregnancy')
+  const [open, setOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const [serverError, setServerError] = useState<string | null>(null)
+
+  const form = useForm<PregnancyFormValues>({
+    resolver: zodResolver(pregnancyFormSchema),
+    defaultValues: {
+      lmp_date: '',
+      baby_gender: '',
+      notes: '',
+    },
+  })
+
+  function onSubmit(values: PregnancyFormValues) {
+    setServerError(null)
+    startTransition(async () => {
+      const formData = new FormData()
+      formData.set('patient_id', patientId)
+      formData.set('lmp_date', values.lmp_date)
+      if (values.baby_gender) {
+        formData.set('baby_gender', values.baby_gender)
+      }
+      if (values.notes) {
+        formData.set('notes', values.notes)
+      }
+
+      const result = await createPregnancy(formData)
+
+      if (result.error) {
+        setServerError(typeof result.error === 'string' ? result.error : 'An error occurred')
+      } else {
+        form.reset()
+        setOpen(false)
+      }
+    })
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm">
+          <Plus className="h-4 w-4 me-1" />
+          {t('addPregnancy')}
+        </Button>
+      </DialogTrigger>
+
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t('addPregnancy')}</DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
+          {/* LMP Date */}
+          <div className="space-y-1">
+            <Label htmlFor="lmp_date">{t('form.lmpDate')}</Label>
+            <Controller
+              name="lmp_date"
+              control={form.control}
+              render={({ field }) => (
+                <DatePickerInput
+                  id="lmp_date"
+                  value={field.value}
+                  onChange={field.onChange}
+                  required
+                />
+              )}
+            />
+            {form.formState.errors.lmp_date && (
+              <p className="text-xs text-destructive">
+                {form.formState.errors.lmp_date.message}
+              </p>
+            )}
+          </div>
+
+          {/* Baby Gender */}
+          <div className="space-y-1">
+            <Label>جنس المولود (اختياري)</Label>
+            <Select
+              value={form.watch('baby_gender') || 'unspecified'}
+              onValueChange={(v) => form.setValue('baby_gender', v === 'unspecified' ? '' : v as 'male' | 'female' | '')}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="غير محدد بعد" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unspecified">غير محدد بعد</SelectItem>
+                <SelectItem value="male">ذكر 👦</SelectItem>
+                <SelectItem value="female">أنثى 👧</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Notes (optional) */}
+          <div className="space-y-1">
+            <Label htmlFor="pregnancy_notes">{t('form.notes')}</Label>
+            <Textarea
+              id="pregnancy_notes"
+              rows={2}
+              placeholder={t('form.notes')}
+              {...form.register('notes')}
+            />
+          </div>
+
+          {serverError && (
+            <Alert variant="destructive">
+              <AlertDescription>{serverError}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="flex gap-2 justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={isPending}
+            >
+              {t('actions.cancel')}
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? '...' : t('actions.save')}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}

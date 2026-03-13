@@ -1,0 +1,14 @@
+# Supabase local development configuration.
+# See https://supabase.com/docs/guides/local-development/cli/config
+
+[api]
+enabled = true
+port = 54321
+
+[db]
+port = 54322
+
+[functions.daily-reminders]
+# The daily-reminders edge function does NOT require a JWT from the caller
+# because it is triggered by pg_cron (an internal Postgres job), not by a user.
+verify_jwt = false

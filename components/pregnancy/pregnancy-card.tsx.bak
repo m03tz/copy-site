@@ -1,0 +1,235 @@
+'use client'
+
+import { useState, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
+import { format } from 'date-fns'
+import { Trash2 } from 'lucide-react'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { MeasurementForm } from '@/components/pregnancy/measurement-form'
+import { MeasurementList } from '@/components/pregnancy/measurement-list'
+import { getGestationalWeek, getDaysUntilDue } from '@/lib/utils/pregnancy'
+import { updatePregnancyStatus, deletePregnancy } from '@/lib/actions/pregnancies'
+import type { Pregnancy, PregnancyMeasurement } from '@/lib/types/database'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type PregnancyWithMeasurements = Pregnancy & {
+  pregnancy_measurements: PregnancyMeasurement[]
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function getStatusBadgeClass(status: string): string {
+  switch (status) {
+    case 'active':
+      return 'bg-green-100 text-green-800 border-green-200'
+    case 'delivered':
+      return 'bg-blue-100 text-blue-800 border-blue-200'
+    case 'miscarriage':
+    case 'ectopic':
+      return 'bg-red-100 text-red-800 border-red-200'
+    default:
+      return ''
+  }
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+interface PregnancyCardProps {
+  pregnancy: PregnancyWithMeasurements
+}
+
+export function PregnancyCard({ pregnancy }: PregnancyCardProps) {
+  const t = useTranslations('pregnancy')
+  const [isPending, startTransition] = useTransition()
+  const [statusError, setStatusError] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
+  function handleDeletePregnancy() {
+    setDeleteError(null)
+    setConfirmOpen(false)
+    startTransition(async () => {
+      const result = await deletePregnancy(pregnancy.id, pregnancy.patient_id)
+      if (result.error) {
+        setDeleteError(typeof result.error === 'string' ? result.error : 'حدث خطأ أثناء الحذف')
+      }
+    })
+  }
+
+  const isActive = pregnancy.status === 'active'
+  const gestationalWeek = isActive ? getGestationalWeek(pregnancy.lmp_date) : null
+  const daysUntilDue = isActive ? getDaysUntilDue(pregnancy.expected_due_date) : null
+
+  function handleStatusChange(newStatus: string) {
+    setStatusError(null)
+    startTransition(async () => {
+      const formData = new FormData()
+      formData.set('pregnancy_id', pregnancy.id)
+      formData.set('status', newStatus)
+      const result = await updatePregnancyStatus(formData)
+      if (result.error) {
+        setStatusError(typeof result.error === 'string' ? result.error : 'An error occurred')
+      }
+    })
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          {/* Status badge + dates */}
+          <div className="space-y-2">
+            <Badge
+              variant="outline"
+              className={getStatusBadgeClass(pregnancy.status)}
+            >
+              {t(`status.${pregnancy.status}`)}
+            </Badge>
+
+            <div className="space-y-1 text-sm">
+              {/* LMP date */}
+              <div className="flex gap-2">
+                <span className="text-muted-foreground">{t('form.lmpDate')}:</span>
+                <span>{format(new Date(pregnancy.lmp_date), 'yyyy-MM-dd')}</span>
+              </div>
+
+              {/* Expected due date */}
+              <div className="flex gap-2">
+                <span className="text-muted-foreground">{t('form.expectedDueDate')}:</span>
+                <span>{format(new Date(pregnancy.expected_due_date), 'yyyy-MM-dd')}</span>
+              </div>
+
+              {/* Gestational week (active only) */}
+              {isActive && gestationalWeek !== null && (
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground">{t('timeline.currentWeek')}:</span>
+                  <span className="font-medium">
+                    {gestationalWeek} {t('timeline.weeksLabel')}
+                  </span>
+                </div>
+              )}
+
+              {/* Days until due (active only) */}
+              {isActive && daysUntilDue !== null && (
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground">{t('timeline.daysUntilDue')}:</span>
+                  <span className={daysUntilDue <= 14 && daysUntilDue >= 0 ? 'font-medium text-amber-600' : ''}>
+                    {daysUntilDue} {t('timeline.daysUntilDue')}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Notes */}
+            {pregnancy.notes && (
+              <p className="text-sm text-muted-foreground mt-1">{pregnancy.notes}</p>
+            )}
+          </div>
+
+          {/* Actions: status update + add measurement + delete */}
+          <div className="flex flex-col gap-2 items-end">
+            <MeasurementForm pregnancyId={pregnancy.id} />
+
+            {/* Delete entire pregnancy */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-destructive border-destructive/40 hover:bg-destructive/10"
+              disabled={isPending}
+              onClick={() => setConfirmOpen(true)}
+            >
+              <Trash2 className="h-3.5 w-3.5 me-1" />
+              حذف الحمل
+            </Button>
+
+            {/* Confirm delete dialog */}
+            <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>حذف سجل الحمل</DialogTitle>
+                  <DialogDescription>
+                    سيتم حذف سجل الحمل وجميع متابعاته بشكل نهائي. هل أنت متأكد؟
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="gap-2">
+                  <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+                    إلغاء
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeletePregnancy}
+                    disabled={isPending}
+                  >
+                    حذف
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Status update select — only for active pregnancies */}
+            {isActive && (
+              <div className="w-48">
+                <Select
+                  defaultValue={pregnancy.status}
+                  onValueChange={handleStatusChange}
+                  disabled={isPending}
+                >
+                  <SelectTrigger className="text-sm h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">{t('status.active')}</SelectItem>
+                    <SelectItem value="delivered">{t('status.delivered')}</SelectItem>
+                    <SelectItem value="miscarriage">{t('status.miscarriage')}</SelectItem>
+                    <SelectItem value="ectopic">{t('status.ectopic')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {statusError && (
+          <Alert variant="destructive" className="mt-2">
+            <AlertDescription>{statusError}</AlertDescription>
+          </Alert>
+        )}
+        {deleteError && (
+          <Alert variant="destructive" className="mt-2">
+            <AlertDescription>{deleteError}</AlertDescription>
+          </Alert>
+        )}
+      </CardHeader>
+
+      <Separator />
+
+      <CardContent className="pt-4">
+        <p className="text-sm font-medium mb-3">{t('measurements.title')}</p>
+        <MeasurementList
+          measurements={pregnancy.pregnancy_measurements}
+          patientId={pregnancy.patient_id}
+        />
+      </CardContent>
+    </Card>
+  )
+}

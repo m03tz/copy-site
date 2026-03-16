@@ -227,6 +227,8 @@ export default async function DoctorPatientProfilePage({ params }: DoctorPatient
             visits={visits}
             files={files}
             doctorId={doctorId}
+            gravida={patientRecord?.gravida}
+            para={patientRecord?.para}
           />
         </TabsContent>
       </Tabs>

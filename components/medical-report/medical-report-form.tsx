@@ -21,6 +21,8 @@ interface ActivePregnancy {
 interface MedicalReportFormProps {
   patientName: string
   activePregnancy?: ActivePregnancy | null
+  gravida?: number | null
+  para?: number | null
 }
 
 type TemplateId =
@@ -117,22 +119,26 @@ PREVIOUS ${p.cs || '__'} CS FOR ELECTIVE CS
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function MedicalReportForm({ patientName, activePregnancy }: MedicalReportFormProps) {
+export function MedicalReportForm({ patientName, activePregnancy, gravida, para }: MedicalReportFormProps) {
   const t = useTranslations('medicalReport')
   const locale = useLocale()
   const today = format(new Date(), 'dd-MM-yyyy')
 
   // Derive smart defaults from active pregnancy
   const smartDefaults = useMemo((): Record<string, string> => {
-    if (!activePregnancy) return {}
+    const defaults: Record<string, string> = {}
+    if (gravida != null) defaults.gravida = String(gravida)
+    if (para != null) defaults.para = String(para)
+    if (!activePregnancy) return defaults
     const ga = gaWeeksFromLmp(activePregnancy.lmp_date)
     return {
+      ...defaults,
       month: monthFromWeeks(ga),
       lmp: activePregnancy.lmp_date,
       edd: activePregnancy.expected_due_date,
       ga: String(ga),
     }
-  }, [activePregnancy])
+  }, [activePregnancy, gravida, para])
 
   const [selected, setSelected] = useState<TemplateId>('report')
 

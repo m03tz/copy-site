@@ -62,7 +62,7 @@ export function PatientAutocomplete({ basePath = '/doctor/patients' }: { basePat
   }
 
   function handleSelect(patient: PatientResult) {
-    router.push(`/doctor/patients/${patient.id}`)
+    router.push(`${basePath}/${patient.id}`)
     setOpen(false)
     setQuery('')
     setResults([])

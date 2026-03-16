@@ -24,6 +24,7 @@ interface PatientData {
 interface PatientCardProps {
   patient: PatientData
   basePath: string
+  lastVisitDate?: string | null
   labels: {
     phone: string
     dateOfBirth: string
@@ -31,7 +32,7 @@ interface PatientCardProps {
   }
 }
 
-export function PatientCard({ patient, basePath, labels }: PatientCardProps) {
+export function PatientCard({ patient, basePath, lastVisitDate, labels }: PatientCardProps) {
   // Supabase may return the nested record as array or object
   const patientRecord = Array.isArray(patient.patients)
     ? patient.patients[0]
@@ -48,11 +49,16 @@ export function PatientCard({ patient, basePath, labels }: PatientCardProps) {
                 <p className="text-start text-sm text-muted-foreground">{patient.full_name_en}</p>
               )}
             </div>
-            {patientRecord?.patient_code && (
-              <span className="shrink-0 rounded bg-muted px-2 py-0.5 text-xs font-mono text-muted-foreground">
-                {patientRecord.patient_code}
-              </span>
-            )}
+            <div className="flex flex-col items-end gap-1 shrink-0">
+              {patientRecord?.patient_code && (
+                <span className="rounded bg-muted px-2 py-0.5 text-xs font-mono text-muted-foreground">
+                  {patientRecord.patient_code}
+                </span>
+              )}
+              {lastVisitDate && (
+                <span className="text-xs font-medium text-red-500">{lastVisitDate}</span>
+              )}
+            </div>
           </div>
           {patientRecord?.blood_type && (
             <Badge variant="secondary" className="w-fit">

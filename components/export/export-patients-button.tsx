@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { getExportPatients } from '@/lib/actions/export'
 
 export function ExportPatientsButton() {
-  const t = useTranslations('patients')
   const tc = useTranslations('common')
   const [loading, setLoading] = useState(false)
 

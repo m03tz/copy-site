@@ -158,8 +158,6 @@ export interface Database {
           created_by: string | null
           created_at: string
           updated_at: string
-          reminder_24h_email_id: string | null
-          reminder_2h_email_id: string | null
         }
         Insert: {
           id?: string
@@ -174,8 +172,6 @@ export interface Database {
           created_by?: string | null
           created_at?: string
           updated_at?: string
-          reminder_24h_email_id?: string | null
-          reminder_2h_email_id?: string | null
         }
         Update: {
           id?: string
@@ -190,8 +186,6 @@ export interface Database {
           created_by?: string | null
           created_at?: string
           updated_at?: string
-          reminder_24h_email_id?: string | null
-          reminder_2h_email_id?: string | null
         }
         Relationships: []
       }

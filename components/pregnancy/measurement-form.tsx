@@ -240,6 +240,8 @@ export function MeasurementForm({ pregnancyId, lmpDate, latestVitals }: Measurem
               </div>
             </div>
             {/* Obstetric clinical fields */}
+            <Separator className="my-1" />
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Obstetric Findings</p>
             <div className="grid gap-3 sm:grid-cols-3">
               {/* Fetal Heart - select: absent / present */}
               <div className="space-y-1">
@@ -303,20 +305,6 @@ export function MeasurementForm({ pregnancyId, lmpDate, latestVitals }: Measurem
             </div>
           </div>
 
-          {/* ── Plan ── */}
-          <div className="space-y-1 rounded-lg border border-blue-300 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 shadow-sm p-4">
-            <Label htmlFor="measurement_notes" className="text-blue-700 dark:text-blue-400 font-semibold">
-              {t('measurements.notes')}
-            </Label>
-            <Textarea
-              id="measurement_notes"
-              rows={2}
-              placeholder={t('measurements.notes')}
-              className="border-blue-200 dark:border-blue-800 focus-visible:ring-blue-400"
-              {...form.register('notes')}
-            />
-          </div>
-
           <Separator />
 
           {/* ── Ultrasound + Lab side by side ── */}
@@ -351,6 +339,20 @@ export function MeasurementForm({ pregnancyId, lmpDate, latestVitals }: Measurem
                 <LabField label="β-HCG (mIU/mL)"               name="b_hcg"        form={form} />
               </div>
             </div>
+          </div>
+
+          {/* ── Plan ── */}
+          <div className="space-y-1 rounded-lg border border-blue-300 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 shadow-sm p-4">
+            <Label htmlFor="measurement_notes" className="text-blue-700 dark:text-blue-400 font-semibold">
+              {t('measurements.notes')}
+            </Label>
+            <Textarea
+              id="measurement_notes"
+              rows={2}
+              placeholder={t('measurements.notes')}
+              className="border-blue-200 dark:border-blue-800 focus-visible:ring-blue-400"
+              {...form.register('notes')}
+            />
           </div>
 
           {serverError && (

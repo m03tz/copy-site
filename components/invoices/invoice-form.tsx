@@ -101,7 +101,7 @@ function printInvoice(opts: {
   ${opts.notes ? `<div class="notes-box"><strong>ملاحظات:</strong> ${opts.notes}</div>` : ''}
 
   <div class="footer">
-    <p>عيادة د. فادي نادي السحلة الإلكترونية | هاتف: <span dir="ltr">+962 7 8663 7847</span></p>
+    <p>عيادة د. فادي السحلة الإلكترونية | هاتف: <span dir="ltr">+962 7 8663 7847</span></p>
   </div>
 </body>
 </html>`

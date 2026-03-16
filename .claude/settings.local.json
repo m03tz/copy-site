@@ -34,7 +34,8 @@
       "Bash(head -5 grep -n \"medical_record_id\\\\|PrescriptionForm\\\\|addOpen\" \"D:/doctor site/components/prescriptions/prescription-card.tsx\")",
       "Bash(head -10 find 'D:/doctor site' -name *visitor* -o -name *report*)",
       "Bash(find 'D:/doctor site' -name *visitor*)",
-      "Bash(find 'D:/doctor site' -name *visit*form* -o -name *visit-form*)"
+      "Bash(find 'D:/doctor site' -name *visit*form* -o -name *visit-form*)",
+      "Bash(cmd /c \"robocopy \"\"D:\\\\doctor site\"\" \"\"D:\\\\doctor-app\"\" /E /XD node_modules .next .git\")"
     ]
   }
 }

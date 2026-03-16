@@ -293,7 +293,7 @@ export function VisitorsSummary({ todayCount, monthCount, yearCount }: VisitorsS
 
       {/* ── Report Dialog ── */}
       <Dialog open={reportOpen} onOpenChange={setReportOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {t('reportTitle')} —{' '}
@@ -324,7 +324,7 @@ export function VisitorsSummary({ todayCount, monthCount, yearCount }: VisitorsS
                     {reportRecords?.map((r, i) => (
                       <tr key={r.id} className="border-b last:border-0">
                         <td className="py-2 px-3 text-muted-foreground">{i + 1}</td>
-                        <td className="py-2 px-3">{r.patient_name}</td>
+                        <td className="py-2 px-3 whitespace-nowrap">{r.patient_name}</td>
                         <td className="py-2 px-3 font-mono text-xs">{r.patient_code ?? '—'}</td>
                         <td className="py-2 px-3 text-xs">{r.national_id ?? '—'}</td>
                         <td className="py-2 px-3 text-xs dir-ltr">{r.phone ?? '—'}</td>
@@ -335,7 +335,7 @@ export function VisitorsSummary({ todayCount, monthCount, yearCount }: VisitorsS
                             </span>
                           ) : '—'}
                         </td>
-                        <td className="py-2 px-3 dir-ltr text-left">{r.visit_date}</td>
+                        <td className="py-2 px-3 dir-ltr text-left whitespace-nowrap">{r.visit_date}</td>
                         <td className="py-2 px-3 font-semibold">
                           {r.visit_fee != null ? r.visit_fee.toFixed(2) : '—'}
                         </td>

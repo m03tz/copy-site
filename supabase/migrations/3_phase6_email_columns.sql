@@ -1,0 +1,1 @@
+-- Phase 6: Email reminder columns (removed — email notifications not used)

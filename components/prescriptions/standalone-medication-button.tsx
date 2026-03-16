@@ -41,8 +41,8 @@ function printPrescription(patientName: string, medications: FormValues['medicat
   const tdStyle = 'padding:9px 12px;border:1px solid #ddd;font-size:13px;vertical-align:middle'
 
   const labels = isAr
-    ? { patient: 'اسم المريضة', date: 'التاريخ', medication: 'الدواء', dose: 'الجرعة', amount: 'الكمية', frequency: 'التكرار', duration: 'المدة', signature: 'توقيع الطبيب', doctor: 'د. فادي نادي السحلة', title: 'وصفة طبية' }
-    : { patient: 'Patient', date: 'Date', medication: 'Medication', dose: 'Dose', amount: 'Amount', frequency: 'Frequency', duration: 'Duration', signature: 'Doctor Signature', doctor: 'Dr. Fadi Nadi Al-Sahla', title: 'Prescription' }
+    ? { patient: 'اسم المريضة', date: 'التاريخ', medication: 'الدواء', dose: 'الجرعة', amount: 'الكمية', frequency: 'التكرار', duration: 'المدة', signature: 'توقيع الطبيب', doctor: 'د. فادي السحلة', title: 'وصفة طبية' }
+    : { patient: 'Patient', date: 'Date', medication: 'Medication', dose: 'Dose', amount: 'Amount', frequency: 'Frequency', duration: 'Duration', signature: 'Doctor Signature', doctor: 'Dr. Fadi Al-Sahla', title: 'Prescription' }
 
   const rows = medications
     .filter((m) => m.medication_name)

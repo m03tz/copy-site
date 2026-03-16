@@ -53,7 +53,6 @@ const bookSchema = z.object({
 /**
  * Book an appointment. Only doctor or secretary can book.
  * Handles PostgreSQL error 23P01 (exclusion_violation) for double-booking.
- * Schedules 24h and 2h reminder emails via Resend if patient has an email address.
  */
 export async function bookAppointment(
   formData: FormData
@@ -168,7 +167,6 @@ export async function bookAppointment(
 /**
  * Cancel an appointment. Only doctor or secretary can cancel.
  * Enforces 24-hour advance cancellation policy.
- * Cancels any scheduled reminder emails and sends immediate cancellation notification.
  */
 export async function cancelAppointment(
   appointmentId: string,
@@ -192,18 +190,16 @@ export async function cancelAppointment(
     return { error: 'Only doctor or secretary can cancel appointments' }
   }
 
-  // Fetch the appointment (including email IDs and patient_id for email operations)
+  // Fetch the appointment
   const { data: appointment } = await supabase
     .from('appointments')
-    .select('scheduled_start, status, patient_id, reminder_24h_email_id, reminder_2h_email_id')
+    .select('scheduled_start, status, patient_id')
     .eq('id', appointmentId)
     .single() as {
       data: {
         scheduled_start: string
         status: string
         patient_id: string
-        reminder_24h_email_id: string | null
-        reminder_2h_email_id: string | null
       } | null
     }
 
@@ -531,4 +527,36 @@ export async function getAppointments(filters: {
   }))
 
   return { appointments }
+}
+
+/**
+ * Fetch upcoming (non-cancelled) appointments for a specific patient.
+ * Returns lightweight records: id, scheduled_start, appointment_type, status.
+ */
+export async function getPatientFutureAppointments(
+  patientId: string
+): Promise<{
+  appointments?: { id: string; scheduled_start: string; scheduled_end: string; appointment_type: string; status: string; notes: string | null }[]
+  error?: string
+}> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Unauthorized' }
+
+  const nowIso = new Date().toISOString()
+
+  const { data, error } = await supabase
+    .from('appointments')
+    .select('id, scheduled_start, scheduled_end, appointment_type, status, notes')
+    .eq('patient_id', patientId)
+    .neq('status', 'cancelled')
+    .gte('scheduled_start', nowIso)
+    .order('scheduled_start', { ascending: true })
+    .limit(5) as {
+      data: { id: string; scheduled_start: string; scheduled_end: string; appointment_type: string; status: string; notes: string | null }[] | null
+      error: { message: string } | null
+    }
+
+  if (error) return { error: error.message }
+  return { appointments: data ?? [] }
 }

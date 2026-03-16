@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { generateAvailableSlots, TimeSlot } from '@/lib/utils/slots'
+import { sendBookingNotification } from '@/lib/actions/whatsapp'
 
 const bookSchema = z.object({
   scheduled_start: z.string().datetime(),
@@ -160,6 +161,26 @@ export async function bookAppointmentAsPatient(
       return { error: 'هذا الوقت محجوز بالفعل، يرجى اختيار وقت آخر' }
     }
     return { error: insertError.message }
+  }
+
+  // Send WhatsApp booking confirmation using Arabic name
+  try {
+    const { data: patientProfile } = await supabase
+      .from('profiles')
+      .select('phone, full_name_ar')
+      .eq('id', user.id)
+      .single() as { data: { phone: string; full_name_ar: string } | null }
+
+    if (patientProfile?.phone) {
+      await sendBookingNotification({
+        patientPhone: patientProfile.phone,
+        patientName: patientProfile.full_name_ar,
+        scheduledStart: scheduled_start,
+        appointmentType: appointment_type,
+      })
+    }
+  } catch (e) {
+    console.error('Failed to send WhatsApp booking notification:', e)
   }
 
   revalidatePath('/patient/dashboard')

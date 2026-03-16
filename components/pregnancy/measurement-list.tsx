@@ -135,20 +135,18 @@ function MeasurementCard({
 
       {error && <p className="text-xs text-destructive">{error}</p>}
 
-      {/* Vital signs — each measure in a shadow box */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-        <DataChip label={t('measurements.weightKg')}  value={m.weight_kg    != null ? `${m.weight_kg} ${t('measurements.weightUnit')}` : null} />
+      {/* Vital signs — Row 1: Weight + Blood Pressure */}
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <DataChip label={t('measurements.weightKg')}     value={m.weight_kg != null ? `${m.weight_kg} ${t('measurements.weightUnit')}` : null} />
         <DataChip label={t('measurements.bloodPressure')} value={m.blood_pressure} />
-        {m.fh      && <DataChip label={t('measurements.fh')}              value={m.fh} />}
-        {m.placenta && <DataChip label={t('measurements.placenta')}       value={m.placenta} />}
-        {m.liquor  && <DataChip label={t('measurements.liquor')}          value={m.liquor} />}
       </div>
 
-      {/* Plan — blue square */}
-      {m.notes && (
-        <div className="rounded-lg border border-blue-300 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 shadow-sm px-3 py-2">
-          <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-1">{t('measurements.notes')}</p>
-          <p className="text-xs text-blue-900 dark:text-blue-200">{m.notes}</p>
+      {/* Obstetric findings — Row 2: FH + Placenta + Liquor on one line */}
+      {(m.fh || m.placenta || m.liquor) && (
+        <div className="grid grid-cols-3 gap-2 text-xs">
+          <DataChip label={t('measurements.fh')}      value={m.fh      ?? null} />
+          <DataChip label={t('measurements.placenta')} value={m.placenta ?? null} />
+          <DataChip label={t('measurements.liquor')}   value={m.liquor  ?? null} />
         </div>
       )}
 
@@ -187,6 +185,14 @@ function MeasurementCard({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Plan — blue square */}
+      {m.notes && (
+        <div className="rounded-lg border border-blue-300 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 shadow-sm px-3 py-2">
+          <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-1">{t('measurements.notes')}</p>
+          <p className="text-xs text-blue-900 dark:text-blue-200">{m.notes}</p>
         </div>
       )}
 
@@ -366,22 +372,6 @@ function EditMeasurementDialog({
             </div>
           </div>
 
-          {/* Plan — blue box */}
-          <div className="space-y-1 rounded-lg border border-blue-300 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 shadow-sm p-4">
-            <Label htmlFor="e_notes" className="text-blue-700 dark:text-blue-400 font-semibold">
-              {t('measurements.notes')}
-            </Label>
-            <Textarea
-              id="e_notes"
-              name="notes"
-              rows={2}
-              defaultValue={m.notes ?? ''}
-              className="border-blue-200 dark:border-blue-800 focus-visible:ring-blue-400"
-            />
-          </div>
-
-          <Separator />
-
           {/* Ultrasound + Lab side by side */}
           <div className="grid gap-6 sm:grid-cols-2">
             <div className="space-y-2">
@@ -411,6 +401,22 @@ function EditMeasurementDialog({
                 <F label="β-HCG (mIU/mL)"              name="b_hcg"        type="number" defaultValue={n(m.b_hcg)} />
               </div>
             </div>
+          </div>
+
+          <Separator />
+
+          {/* Plan — blue box */}
+          <div className="space-y-1 rounded-lg border border-blue-300 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 shadow-sm p-4">
+            <Label htmlFor="e_notes" className="text-blue-700 dark:text-blue-400 font-semibold">
+              {t('measurements.notes')}
+            </Label>
+            <Textarea
+              id="e_notes"
+              name="notes"
+              rows={2}
+              defaultValue={m.notes ?? ''}
+              className="border-blue-200 dark:border-blue-800 focus-visible:ring-blue-400"
+            />
           </div>
 
           {error && (

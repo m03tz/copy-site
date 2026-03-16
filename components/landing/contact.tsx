@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/routing'
-import { MapPin, Phone, Clock } from 'lucide-react'
+import { MapPin, Clock } from 'lucide-react'
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (

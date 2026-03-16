@@ -42,6 +42,7 @@ interface Patient {
   phone?: string | null
   national_id?: string | null
   patient_code?: string | null
+  last_visit_date?: string | null
 }
 
 interface AddRecordButtonProps {
@@ -62,10 +63,6 @@ export function AddRecordButton({ patients }: AddRecordButtonProps) {
   const [visitNote, setVisitNote] = useState<string>('')
 
   const todayStr = format(new Date(), 'yyyy-MM-dd')
-
-  function getPatientDisplayName(patient: Patient) {
-    return patient.full_name_ar
-  }
 
   function handleSubmit(formData: FormData) {
     setError(null)
@@ -180,6 +177,16 @@ export function AddRecordButton({ patients }: AddRecordButtonProps) {
                 </PopoverContent>
               </Popover>
             </div>
+
+            {/* Last visit date indicator */}
+            {patientId && (() => {
+              const sel = patients.find((p) => p.id === patientId)
+              return sel?.last_visit_date ? (
+                <p className="text-xs font-medium text-red-500">
+                  {locale === 'ar' ? 'آخر زيارة:' : 'Last visit:'} {sel.last_visit_date}
+                </p>
+              ) : null
+            })()}
 
             {/* Visit Date */}
             <div className="space-y-1">

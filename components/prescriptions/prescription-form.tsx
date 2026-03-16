@@ -54,8 +54,8 @@ function printPrescription(patientName: string, medications: PrescriptionFormVal
     .join('')
 
   const labels = isAr
-    ? { patient: 'اسم المريضة', date: 'التاريخ', medication: 'الدواء', dose: 'الجرعة', amount: 'الكمية', frequency: 'التكرار', duration: 'المدة (يوم)', signature: 'توقيع الطبيب', doctor: 'د. فادي نادي السحلة', title: 'وصفة طبية' }
-    : { patient: 'Patient', date: 'Date', medication: 'Medication', dose: 'Dose', amount: 'Amount', frequency: 'Frequency', duration: 'Duration (day)', signature: 'Doctor Signature', doctor: 'Dr. Fadi Nadi Al-Sahla', title: 'Prescription' }
+    ? { patient: 'اسم المريضة', date: 'التاريخ', medication: 'الدواء', dose: 'الجرعة', amount: 'الكمية', frequency: 'التكرار', duration: 'المدة (يوم)', signature: 'توقيع الطبيب', doctor: 'د. فادي السحلة', title: 'وصفة طبية' }
+    : { patient: 'Patient', date: 'Date', medication: 'Medication', dose: 'Dose', amount: 'Amount', frequency: 'Frequency', duration: 'Duration (day)', signature: 'Doctor Signature', doctor: 'Dr. Fadi Al-Sahla', title: 'Prescription' }
 
   const html = `<!DOCTYPE html>
 <html dir="${dir}" lang="${lang}">

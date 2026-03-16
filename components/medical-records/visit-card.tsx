@@ -75,9 +75,11 @@ interface VisitCardProps {
   redirectAfterEnd?: boolean
   /** Called when clicking the patient name to navigate to patient profile */
   onPatientClick?: () => void
+  /** Most recent previous visit date for this patient — shown in red */
+  lastVisitDate?: string | null
 }
 
-export function VisitCard({ visit, patientId, canPrescribe = true, canEndVisit, patientName, dayQueueNum, redirectAfterEnd = true, onPatientClick }: VisitCardProps) {
+export function VisitCard({ visit, patientId, canPrescribe = true, canEndVisit, patientName, dayQueueNum, redirectAfterEnd = true, onPatientClick, lastVisitDate }: VisitCardProps) {
   // If canEndVisit is not explicitly set, fall back to canPrescribe (backward compatibility)
   const canEnd = canEndVisit ?? canPrescribe
   const t = useTranslations('visits')
@@ -322,6 +324,13 @@ export function VisitCard({ visit, patientId, canPrescribe = true, canEndVisit, 
             </div>
           ) : (
             <p className="text-sm text-muted-foreground italic">{t('card.notes')}: —</p>
+          )}
+
+          {/* Last visit date */}
+          {lastVisitDate && (
+            <p className="text-xs font-medium text-red-500">
+              آخر زيارة: {lastVisitDate}
+            </p>
           )}
 
           {/* Prescription count badge */}

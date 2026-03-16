@@ -170,12 +170,14 @@ function RecordFormDialog({ open, onClose, patientId, editRecord, nextVisitNum }
               <Separator />
               <div className="space-y-3">
                 <SectionTitle icon={<User className="h-3.5 w-3.5" />} label={t('form.sfa')} />
-                <NumField label="Count (×10⁶/mL)" name="sfa_count"      defaultValue={def.sfa_count} step="0.01" />
-                <NumField label="Motility %"       name="sfa_motility"   defaultValue={def.sfa_motility} min={0} max={100} step="0.1" />
-                <NumField label="Morphology %"     name="sfa_morphology" defaultValue={def.sfa_morphology} min={0} max={100} step="0.1" />
-                <Field label="Viscosity">
-                  <Input type="text" name="sfa_viscosity" defaultValue={def.sfa_viscosity ?? ''} placeholder="Normal / High / Low" />
-                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <NumField label="Count (×10⁶/mL)" name="sfa_count"      defaultValue={def.sfa_count} step="0.01" />
+                  <NumField label="Motility %"       name="sfa_motility"   defaultValue={def.sfa_motility} min={0} max={100} step="0.1" />
+                  <NumField label="Morphology %"     name="sfa_morphology" defaultValue={def.sfa_morphology} min={0} max={100} step="0.1" />
+                  <Field label="Viscosity">
+                    <Input type="text" name="sfa_viscosity" defaultValue={def.sfa_viscosity ?? ''} placeholder="Normal / High / Low" />
+                  </Field>
+                </div>
               </div>
             </div>
           </div>
@@ -384,17 +386,17 @@ function RecordCard({ record, patientId, patientName, canEdit }: RecordCardProps
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                 <User className="h-3 w-3" /> SFA
               </p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 <HormoneChip label="Count"      value={record.sfa_count}      unit="×10⁶/mL" />
                 <HormoneChip label="Motility"   value={record.sfa_motility}   unit="%" />
                 <HormoneChip label="Morphology" value={record.sfa_morphology} unit="%" />
+                {record.sfa_viscosity && (
+                  <div className="rounded-md border bg-muted/30 px-2 py-1.5 text-center">
+                    <p className="text-[10px] text-muted-foreground">Viscosity</p>
+                    <p className="text-sm font-semibold">{record.sfa_viscosity}</p>
+                  </div>
+                )}
               </div>
-              {record.sfa_viscosity && (
-                <div className="flex gap-2 text-sm">
-                  <span className="text-muted-foreground font-medium shrink-0">Viscosity:</span>
-                  <span>{record.sfa_viscosity}</span>
-                </div>
-              )}
             </div>
           )}
 

@@ -23,11 +23,9 @@ export interface Operation {
 }
 
 export async function getOperations(): Promise<{ data?: Operation[]; error?: string }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabase = await createClient() as any as any
+  const supabase = await createClient()
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase
     .from('operations')
     .select(`
       id,
@@ -46,7 +44,8 @@ export async function getOperations(): Promise<{ data?: Operation[]; error?: str
         patient_code
       )
     `)
-    .order('operation_date', { ascending: false })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .order('operation_date', { ascending: false }) as any)
 
   if (error) return { error: error.message }
 

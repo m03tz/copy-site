@@ -30,6 +30,7 @@ interface VisitData {
   }[]
   patient_name_ar: string
   patient_name_en: string | null
+  last_visit_date?: string | null
 }
 
 interface MedicalRecordsTabsProps {
@@ -121,6 +122,7 @@ export function MedicalRecordsTabs({ todayVisits, allVisits }: MedicalRecordsTab
                 patientName={visit.patient_name_ar || visit.patient_name_en || ''}
                 dayQueueNum={visit.dayQueueNum}
                 redirectAfterEnd={false}
+                lastVisitDate={visit.last_visit_date}
                 onPatientClick={() => goToPatient(visit.patient_id)}
               />
             ))}
@@ -158,6 +160,7 @@ export function MedicalRecordsTabs({ todayVisits, allVisits }: MedicalRecordsTab
                 canEndVisit={true}
                 patientName={visit.patient_name_ar || visit.patient_name_en || ''}
                 redirectAfterEnd={false}
+                lastVisitDate={visit.last_visit_date}
                 onPatientClick={() => goToPatient(visit.patient_id)}
               />
             ))}

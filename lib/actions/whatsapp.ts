@@ -33,7 +33,7 @@ export function buildReminderMessage(
       ? 'نذكرك بموعدك غداً'
       : 'نذكرك بأن موعدك خلال ساعتين'
 
-  return `🏥 *عيادة د. فادي نادي السحلة*
+  return `🏥 *عيادة د. فادي السحلة*
 أخصائي نساء وتوليد وعقم وجراحة بالمنظار
 
 مرحباً ${patientName}،
@@ -60,7 +60,7 @@ export function buildCancellationMessage(params: {
 }): string {
   const { patientName, appointmentDate, appointmentTime } = params
 
-  return `🏥 *عيادة د. فادي نادي السحلة*
+  return `🏥 *عيادة د. فادي السحلة*
 
 مرحباً ${patientName}،
 نود إعلامك بأنه تم *إلغاء* موعدك ❌
@@ -84,7 +84,7 @@ export function buildBookingConfirmationMessage(params: {
 }): string {
   const { patientName, appointmentDate, appointmentTime, appointmentType } = params
 
-  return `🏥 *عيادة د. فادي نادي السحلة*
+  return `🏥 *عيادة د. فادي السحلة*
 
 مرحباً ${patientName}،
 تم حجز موعدك بنجاح ✅

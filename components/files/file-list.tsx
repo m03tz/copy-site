@@ -76,7 +76,7 @@ function ImageThumbnail({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function FileList({ files, patientId }: FileListProps) {
+export function FileList({ files }: FileListProps) {
   const t = useTranslations('files')
   const [isPending, startTransition] = useTransition()
   const [deleteTarget, setDeleteTarget] = useState<FileRow | null>(null)

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
-import { format, addDays, startOfDay, isSameDay } from 'date-fns'
+import { format, startOfDay, isSameDay } from 'date-fns'
 import { ar } from 'date-fns/locale'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -144,8 +144,6 @@ export function AppointmentsTabs({ appointments, showInvoice, showComplete, invo
   }
 
   const now = new Date()
-  const todayStart = startOfDay(now)
-  const weekEnd = addDays(todayStart, 8)
 
   function matchesSearch(a: Appointment): boolean {
     if (!search.trim()) return true

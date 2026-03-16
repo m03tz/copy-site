@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Separator } from '@/components/ui/separator'
 import {
   Dialog,
   DialogContent,
@@ -51,7 +50,7 @@ interface MedicationRow {
   duration: string
 }
 
-export function AddPrescriptionButton({ patients, recentVisits }: AddPrescriptionButtonProps) {
+export function AddPrescriptionButton({ recentVisits }: AddPrescriptionButtonProps) {
   const t = useTranslations('prescriptions')
   const tPage = useTranslations('prescriptionsPage')
   const locale = useLocale()
@@ -64,13 +63,6 @@ export function AddPrescriptionButton({ patients, recentVisits }: AddPrescriptio
   const [medications, setMedications] = useState<MedicationRow[]>([
     { medication_name: '', dosage: '', quantity: '', instructions: '', duration: '' },
   ])
-
-  function getPatientDisplayName(patient: Patient) {
-    if (locale === 'en' && patient.full_name_en) {
-      return patient.full_name_en
-    }
-    return patient.full_name_ar
-  }
 
   function addMedication() {
     setMedications([...medications, { medication_name: '', dosage: '', duration: '', instructions: '', quantity: '' }])

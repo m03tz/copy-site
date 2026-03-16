@@ -84,6 +84,8 @@ interface ClinicalFormTabsProps {
   visits: VisitWithPrescriptions[]
   files: FileRow[]
   doctorId: string
+  gravida?: number | null
+  para?: number | null
   /** Path to navigate to after end-visit. Defaults to /{locale}/doctor/medical-records */
   afterEndVisitPath?: string
 }
@@ -100,6 +102,8 @@ export function ClinicalFormTabs({
   visits,
   files,
   doctorId,
+  gravida,
+  para,
   afterEndVisitPath,
 }: ClinicalFormTabsProps) {
   const t = useTranslations('anc')
@@ -262,6 +266,8 @@ export function ClinicalFormTabs({
           activePregnancy={activePregnancy
             ? { lmp_date: activePregnancy.lmp_date, expected_due_date: activePregnancy.expected_due_date }
             : null}
+          gravida={gravida}
+          para={para}
         />
       )}
 

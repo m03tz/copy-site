@@ -125,8 +125,29 @@ export async function searchPatients(
 
   if (error) return { error: error.message }
 
+  // Fetch the most recent ended visit date per patient
+  const patientIds = (patients ?? []).map((p) => p.id as string)
+  const lastVisitMap: Record<string, string> = {}
+  if (patientIds.length > 0) {
+    const { data: lastVisits } = await supabase
+      .from('medical_records')
+      .select('patient_id, visit_date')
+      .in('patient_id', patientIds)
+      .eq('is_ended', true)
+      .is('deleted_at', null)
+      .order('visit_date', { ascending: false }) as {
+        data: { patient_id: string; visit_date: string }[] | null
+      }
+    for (const v of lastVisits ?? []) {
+      if (!lastVisitMap[v.patient_id]) lastVisitMap[v.patient_id] = v.visit_date
+    }
+  }
+
   return {
-    patients: patients ?? [],
+    patients: (patients ?? []).map((p) => ({
+      ...p,
+      last_visit_date: lastVisitMap[p.id as string] ?? null,
+    })),
     count: count ?? 0,
     page,
     perPage,

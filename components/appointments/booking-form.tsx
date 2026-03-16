@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { format } from 'date-fns'
 import { Button } from '@/components/ui/button'
@@ -24,10 +24,11 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { SlotPicker } from '@/components/appointments/slot-picker'
-import { getAvailableSlots, bookAppointment } from '@/lib/actions/appointments'
+import { getAvailableSlots, bookAppointment, getPatientFutureAppointments, updateAppointment } from '@/lib/actions/appointments'
 import { searchPatients } from '@/lib/actions/patients'
 import type { TimeSlot } from '@/lib/utils/slots'
-import { ChevronsUpDown, Check } from 'lucide-react'
+import { ChevronsUpDown, Check, Pencil } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 
 type AppointmentType =
   | 'consultation'
@@ -72,6 +73,26 @@ export function BookingForm({ patients, doctorId, preselectedPatientId, preselec
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [bookingLoading, setBookingLoading] = useState(false)
+  const [futureAppointments, setFutureAppointments] = useState<{ id: string; scheduled_start: string; scheduled_end: string; appointment_type: string; status: string; notes: string | null }[]>([])
+
+  // Edit appointment state
+  const [editingAppt, setEditingAppt] = useState<{ id: string; scheduled_start: string; scheduled_end: string; appointment_type: string; notes: string | null } | null>(null)
+  const [editType, setEditType] = useState<string>('')
+  const [editDate, setEditDate] = useState<Date | undefined>()
+  const [editSlots, setEditSlots] = useState<TimeSlot[]>([])
+  const [editSlotsLoading, setEditSlotsLoading] = useState(false)
+  const [editSlot, setEditSlot] = useState<TimeSlot | null>(null)
+  const [editNotes, setEditNotes] = useState<string>('')
+  const [editError, setEditError] = useState<string | null>(null)
+  const [editIsPending, startEditTransition] = useTransition()
+
+  // Fetch patient's future appointments when patient is pre-selected (from patient profile)
+  useEffect(() => {
+    if (!preselectedPatientId) return
+    getPatientFutureAppointments(preselectedPatientId).then((res) => {
+      setFutureAppointments(res.appointments ?? [])
+    })
+  }, [preselectedPatientId])
 
   async function handleDateSelect(date: Date | undefined) {
     setSelectedDate(date)
@@ -94,6 +115,66 @@ export function BookingForm({ patients, doctorId, preselectedPatientId, preselec
       setSlots(result.slots)
     }
 
+  }
+
+  function openEditDialog(appt: typeof futureAppointments[number]) {
+    setEditingAppt(appt)
+    setEditType(appt.appointment_type)
+    const d = new Date(appt.scheduled_start)
+    setEditDate(d)
+    setEditSlot(null)
+    setEditSlots([])
+    setEditNotes(appt.notes ?? '')
+    setEditError(null)
+    setEditSlotsLoading(true)
+    getAvailableSlots(format(d, 'yyyy-MM-dd'), doctorId).then((res) => {
+      setEditSlotsLoading(false)
+      setEditSlots(res.slots ?? [])
+      // Pre-select the existing slot
+      const existing = (res.slots ?? []).find(
+        (s) => s.start === format(new Date(appt.scheduled_start), 'HH:mm')
+      )
+      if (existing) setEditSlot(existing)
+    })
+  }
+
+  function handleEditDateSelect(date: Date | undefined) {
+    setEditDate(date)
+    setEditSlot(null)
+    setEditSlots([])
+    if (!date) return
+    setEditSlotsLoading(true)
+    getAvailableSlots(format(date, 'yyyy-MM-dd'), doctorId).then((res) => {
+      setEditSlotsLoading(false)
+      setEditSlots(res.slots ?? [])
+    })
+  }
+
+  function handleEditSave() {
+    if (!editingAppt || !editType || !editDate || !editSlot) return
+    setEditError(null)
+    const dateStr = format(editDate, 'yyyy-MM-dd')
+    const scheduled_start = `${dateStr}T${editSlot.start}:00`
+    const scheduled_end   = `${dateStr}T${editSlot.end}:00`
+    startEditTransition(async () => {
+      const res = await updateAppointment({
+        id: editingAppt.id,
+        appointment_type: editType,
+        scheduled_start,
+        scheduled_end,
+        notes: editNotes || undefined,
+      })
+      if (res.error) {
+        setEditError(res.error)
+      } else {
+        setEditingAppt(null)
+        // Refresh future appointments list
+        const patId = preselectedPatientId ?? patientId
+        if (patId) {
+          getPatientFutureAppointments(patId).then((r) => setFutureAppointments(r.appointments ?? []))
+        }
+      }
+    })
   }
 
   async function handleBook() {
@@ -199,7 +280,8 @@ export function BookingForm({ patients, doctorId, preselectedPatientId, preselec
       <div className="space-y-4">
         {/* Patient search combobox */}
         {!preselectedPatientId && (
-          <div className="space-y-2">
+          <div className="flex items-start gap-3">
+          <div className="flex-1 space-y-2">
             <Label>{t('selectPatient')}</Label>
             <Popover open={patientSearchOpen} onOpenChange={setPatientSearchOpen}>
               <PopoverTrigger asChild>
@@ -231,6 +313,9 @@ export function BookingForm({ patients, doctorId, preselectedPatientId, preselec
                             setPatientId(patient.id)
                             setSelectedPatientName(getPatientDisplayName(patient))
                             setPatientSearchOpen(false)
+                            getPatientFutureAppointments(patient.id).then((res) => {
+                              setFutureAppointments(res.appointments ?? [])
+                            })
                           }}
                         >
                           <Check
@@ -252,11 +337,21 @@ export function BookingForm({ patients, doctorId, preselectedPatientId, preselec
               </PopoverContent>
             </Popover>
           </div>
+          {/* Future appointments squares */}
+          {futureAppointments.length > 0 && (
+            <FutureAppointmentSquares appointments={futureAppointments} onEdit={openEditDialog} />
+          )}
+          </div>
         )}
         {preselectedPatientId && (
-          <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
-            <span className="text-muted-foreground">{t('selectPatient')}: </span>
-            <span className="font-medium">{preselectedPatientName}</span>
+          <div className="space-y-3">
+            {futureAppointments.length > 0 && (
+              <FutureAppointmentSquares appointments={futureAppointments} onEdit={openEditDialog} />
+            )}
+            <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
+              <span className="text-muted-foreground">{t('selectPatient')}: </span>
+              <span className="font-medium">{preselectedPatientName}</span>
+            </div>
           </div>
         )}
 
@@ -284,13 +379,14 @@ export function BookingForm({ patients, doctorId, preselectedPatientId, preselec
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
+            onKeyDown={(e) => e.stopPropagation()}
             rows={2}
             placeholder={t('notes')}
           />
         </div>
       </div>
 
-      {/* Step 2: Date picker — inline calendar */}
+      {/* Step 2: Date picker */}
       <div className="space-y-2">
         <Label>{t('selectDate')}</Label>
         <div className="w-full rounded-lg border bg-card p-3">
@@ -338,6 +434,107 @@ export function BookingForm({ patients, doctorId, preselectedPatientId, preselec
           </Button>
         </div>
       )}
+
+      {/* Edit appointment dialog */}
+      <Dialog open={!!editingAppt} onOpenChange={(open) => { if (!open) setEditingAppt(null) }}>
+        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>تعديل الموعد</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 overflow-y-auto flex-1 pr-1">
+            {/* Type */}
+            <div className="space-y-1.5">
+              <Label>{t('selectType')}</Label>
+              <Select value={editType} onValueChange={setEditType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {(['consultation','follow_up','prenatal','ultrasound','other'] as const).map((tp) => (
+                    <SelectItem key={tp} value={tp}>{t(`type.${tp}`)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Date */}
+            <div className="space-y-1.5">
+              <Label>{t('selectDate')}</Label>
+              <div className="rounded-lg border bg-card p-3">
+                <Calendar
+                  mode="single"
+                  selected={editDate}
+                  onSelect={handleEditDateSelect}
+                  disabled={{ before: new Date() }}
+                  className="[--cell-size:2.5rem]"
+                  fullWidth
+                />
+              </div>
+            </div>
+            {/* Slots */}
+            {editDate && (
+              <div className="space-y-1.5">
+                <Label>{t('selectTime')}</Label>
+                {editSlotsLoading
+                  ? <p className="text-sm text-muted-foreground">{tCommon('loading')}</p>
+                  : <SlotPicker slots={editSlots} selectedSlot={editSlot} onSelect={setEditSlot} />
+                }
+              </div>
+            )}
+            {/* Notes */}
+            <div className="space-y-1.5">
+              <Label>{t('notes')}</Label>
+              <Textarea
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                onKeyDown={(e) => e.stopPropagation()}
+                rows={2}
+                placeholder={t('notes')}
+              />
+            </div>
+            {editError && <p className="text-xs text-destructive">{editError}</p>}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditingAppt(null)} disabled={editIsPending}>
+              {tCommon('cancel')}
+            </Button>
+            <Button onClick={handleEditSave} disabled={editIsPending || !editSlot}>
+              {editIsPending ? tCommon('loading') : tCommon('save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+// ── Future appointments as clickable squares ──────────────────────────────────
+function FutureAppointmentSquares({
+  appointments,
+  onEdit,
+}: {
+  appointments: { id: string; scheduled_start: string; appointment_type: string; notes: string | null; scheduled_end: string; status: string }[]
+  onEdit: (appt: { id: string; scheduled_start: string; scheduled_end: string; appointment_type: string; status: string; notes: string | null }) => void
+}) {
+  return (
+    <div className="w-full space-y-1.5">
+      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">مواعيد قادمة</p>
+      <div className="flex flex-wrap gap-2">
+        {appointments.map((appt) => (
+          <button
+            key={appt.id}
+            type="button"
+            onClick={() => onEdit(appt)}
+            title={`${appt.appointment_type} — انقر للتعديل`}
+            className="group relative flex flex-col items-start gap-0.5 rounded-md border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary transition-colors cursor-pointer px-3 py-2 flex-1 min-w-[110px]"
+          >
+            <span className="text-[12px] font-bold text-primary leading-tight">
+              {format(new Date(appt.scheduled_start), 'dd-MM-yyyy')}
+            </span>
+            <span className="text-[11px] text-muted-foreground leading-tight">
+              {format(new Date(appt.scheduled_start), 'HH:mm')} · {appt.appointment_type}
+            </span>
+            <Pencil className="absolute top-1.5 left-1.5 h-2.5 w-2.5 text-primary/30 group-hover:text-primary transition-colors" />
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

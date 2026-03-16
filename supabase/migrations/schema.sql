@@ -103,7 +103,6 @@ CREATE TABLE IF NOT EXISTS doctor_holidays (
 
 -- ─── appointments ──────────────────────────────────────────────────────────
 -- Scheduled appointments with double-booking prevention via exclusion constraint.
--- reminder columns store Resend email IDs for cancellation.
 CREATE TABLE IF NOT EXISTS appointments (
   id                        UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   patient_id                UUID        NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
@@ -117,8 +116,6 @@ CREATE TABLE IF NOT EXISTS appointments (
   cancellation_reason       TEXT,
   notes                     TEXT,
   created_by                UUID        REFERENCES profiles(id),
-  reminder_24h_email_id     TEXT,
-  reminder_2h_email_id      TEXT,
   whatsapp_reminder_sent_at TIMESTAMPTZ,
   created_at                TIMESTAMPTZ DEFAULT NOW(),
   updated_at                TIMESTAMPTZ DEFAULT NOW(),

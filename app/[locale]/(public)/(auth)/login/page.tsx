@@ -18,7 +18,6 @@ type Tab = 'patient' | 'staff'
 export default function LoginPage() {
   const t = useTranslations('auth')
   const tc = useTranslations('common')
-  const tLanding = useTranslations('landing')
   const router = useRouter()
 
   const [tab, setTab] = useState<Tab>('patient')

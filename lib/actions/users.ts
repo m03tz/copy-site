@@ -169,7 +169,6 @@ export async function createPatient(
   // Create profile record
   const { error: profileError } = await adminClient
     .from('profiles')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .insert({
       id: newUser.user.id,
       role: 'patient',
@@ -177,6 +176,7 @@ export async function createPatient(
       full_name_en: full_name_en ?? null,
       phone: phone || null,
       email: email || null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any)
 
   if (profileError) {
@@ -200,7 +200,6 @@ export async function createPatient(
   // Create patients record
   const { error: patientError } = await adminClient
     .from('patients')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .insert({
       id: newUser.user.id,
       date_of_birth,
@@ -208,6 +207,7 @@ export async function createPatient(
       national_id: national_id ?? null,
       nickname: nickname ?? null,
       ...(patientCode ? { patient_code: patientCode } : {}),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any)
 
   if (patientError) {

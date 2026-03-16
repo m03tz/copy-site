@@ -7,7 +7,7 @@ export function getClinicHeaderHtml(baseUrl = ''): string {
   return `
   <div class="clinic-header">
     <img src="${logoSrc}" alt="شعار العيادة" class="clinic-logo" onerror="this.style.display='none'" />
-    <h1 class="clinic-name">عيادة د. فادي نادي السحلة</h1>
+    <h1 class="clinic-name">عيادة د. فادي السحلة</h1>
     <p class="clinic-specialty">أخصائي نساء وتوليد وعقم وجراحة بالمنظار</p>
     <p class="clinic-contact">جرش، الأردن | هاتف: <span dir="ltr">+962 7 8663 7847</span></p>
     <div class="clinic-divider-thick"></div>

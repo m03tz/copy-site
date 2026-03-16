@@ -6,13 +6,6 @@ import { Printer } from 'lucide-react'
 import { format } from 'date-fns'
 import { getClinicHeaderHtml, getClinicHeaderStyles } from '@/lib/print-utils'
 
-// DB field mapping: dosage=frequency, instructions=frequency_type, duration=period
-const freqTypeLabels: Record<string, string> = {
-  day: 'يومياً',
-  week: 'أسبوعياً',
-  month: 'شهرياً',
-}
-
 interface MedicationRow {
   id: string
   medication_name: string

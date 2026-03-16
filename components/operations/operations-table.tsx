@@ -64,6 +64,7 @@ interface Patient {
   full_name_ar: string
   full_name_en: string | null
   patient_code: string | null
+  phone: string | null
 }
 
 interface OperationsTableProps {
@@ -750,6 +751,8 @@ export function OperationsTable({ operations, patients, externalCosts }: Operati
             <TableHeader>
               <TableRow>
                 <TableHead className="text-start">{t('colPatient')}</TableHead>
+                <TableHead className="text-start">رقم الملف</TableHead>
+                <TableHead className="text-start">الهاتف</TableHead>
                 <TableHead className="text-start">{t('colDate')}</TableHead>
                 <TableHead className="text-start">{t('colHospital')}</TableHead>
                 <TableHead className="text-start">{t('colType')}</TableHead>
@@ -760,14 +763,18 @@ export function OperationsTable({ operations, patients, externalCosts }: Operati
             <TableBody>
               {pendingOps.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground text-sm py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground text-sm py-8">
                     {searchQuery ? t('noMatchingResults') : t('noOperations')}
                   </TableCell>
                 </TableRow>
               ) : (
-                pendingOps.map((op) => (
+                pendingOps.map((op) => {
+                  const patient = patients.find((p) => p.id === op.patient_id)
+                  return (
                   <TableRow key={op.id}>
                     <TableCell className="font-medium">{getPatientName(op.patient_id)}</TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">{patient?.patient_code ?? '—'}</TableCell>
+                    <TableCell className="text-xs dir-ltr">{patient?.phone ?? '—'}</TableCell>
                     <TableCell dir="ltr" className="text-start">
                       {format(new Date(op.operation_date), 'dd-MM-yyyy')}
                     </TableCell>
@@ -847,7 +854,8 @@ export function OperationsTable({ operations, patients, externalCosts }: Operati
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
+                  )
+                })
               )}
             </TableBody>
           </Table>

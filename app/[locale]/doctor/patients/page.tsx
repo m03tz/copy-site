@@ -22,6 +22,7 @@ export default async function DoctorPatientsPage({ searchParams }: DoctorPatient
     full_name_ar: string
     full_name_en: string | null
     phone: string
+    last_visit_date?: string | null
     patients: {
       date_of_birth: string
       blood_type: string | null

@@ -115,10 +115,19 @@ export default async function MedicalRecordsPage() {
     }
   }
 
+  // Build last ended visit date per patient
+  const lastVisitDateByPatient: Record<string, string> = {}
+  for (const v of allVisits ?? []) {
+    if (!lastVisitDateByPatient[v.patient_id]) {
+      lastVisitDateByPatient[v.patient_id] = v.visit_date
+    }
+  }
+
   // Normalized visit type
   type VisitData = RawVisitRow & {
     patient_name_ar: string
     patient_name_en: string | null
+    last_visit_date: string | null
   }
 
   const normalizeVisits = (visits: RawVisitRow[] | null): VisitData[] => {
@@ -127,6 +136,7 @@ export default async function MedicalRecordsPage() {
       prescriptions: v.prescriptions ?? [],
       patient_name_ar: patientNames[v.patient_id]?.full_name_ar ?? '',
       patient_name_en: patientNames[v.patient_id]?.full_name_en ?? null,
+      last_visit_date: lastVisitDateByPatient[v.patient_id] ?? null,
     }))
   }
 
@@ -137,6 +147,7 @@ export default async function MedicalRecordsPage() {
     phone: p.phone ?? null,
     national_id: (p.patients as { national_id: string | null } | null)?.national_id ?? null,
     patient_code: (p.patients as { patient_code: string | null } | null)?.patient_code ?? null,
+    last_visit_date: lastVisitDateByPatient[p.id] ?? null,
   }))
 
   return (

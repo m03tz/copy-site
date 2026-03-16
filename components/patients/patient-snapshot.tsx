@@ -4,7 +4,6 @@ import { useMemo, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { Calendar, Baby, Stethoscope, Activity, Pencil, X, Check, Plus, Trash2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { updatePatientMedicalHistory } from '@/lib/actions/patients'
@@ -112,17 +111,6 @@ function formatDate(dateStr: string): string {
   return date.toLocaleDateString('en-CA')
 }
 
-const ULTRASOUND_KEYWORDS = [
-  'ultrasound',
-  'sonography',
-  'sonogram',
-  'u/s',
-  '\u0633\u0648\u0646\u0627\u0631',
-  '\u0623\u0644\u062A\u0631\u0627\u0633\u0627\u0648\u0646\u062F',
-  '\u062A\u0635\u0648\u064A\u0631',
-  '\u0645\u0648\u062C\u0627\u062A',
-]
-
 export function PatientSnapshot({ patient, visits, pregnancies }: PatientSnapshotProps) {
   const t = useTranslations('patients.snapshot')
   const [editingHistory, setEditingHistory] = useState(false)
@@ -162,20 +150,6 @@ export function PatientSnapshot({ patient, visits, pregnancies }: PatientSnapsho
     return visits[0].visit_date
   }, [visits])
 
-  const lastUltrasoundDate = useMemo(() => {
-    if (visits.length === 0) return null
-    for (const visit of visits) {
-      const diagnosisLower = (visit.diagnosis ?? '').toLowerCase()
-      const complaintLower = (visit.chief_complaint ?? '').toLowerCase()
-      const notesLower = (visit.notes ?? '').toLowerCase()
-      const allText = `${diagnosisLower} ${complaintLower} ${notesLower}`
-      const isUltrasound = ULTRASOUND_KEYWORDS.some((keyword) =>
-        allText.includes(keyword.toLowerCase())
-      )
-      if (isUltrasound) return visit.visit_date
-    }
-    return null
-  }, [visits])
 
   function handleSaveObHistory() {
     startTransition(async () => {
@@ -282,12 +256,6 @@ export function PatientSnapshot({ patient, visits, pregnancies }: PatientSnapsho
                 value={lastVisitDate ? formatDate(lastVisitDate) : t('noData')}
               />
 
-              {/* Last Ultrasound */}
-              <SnapshotItem
-                icon={<Activity className="h-4 w-4 text-indigo-500" />}
-                label={t('lastUltrasound')}
-                value={lastUltrasoundDate ? formatDate(lastUltrasoundDate) : t('noData')}
-              />
             </div>
           )}
         </CardContent>

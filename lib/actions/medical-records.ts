@@ -329,9 +329,9 @@ export async function deleteVisitRecord(
     return { error: 'Only doctor or secretary can delete visit records' }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await supabase
     .from('medical_records')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .update({ deleted_at: new Date().toISOString() } as any)
     .eq('id', recordId)
 

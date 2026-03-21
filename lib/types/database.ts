@@ -636,30 +636,42 @@ export interface Database {
       operations: {
         Row: {
           id: string
-          patient_id: string
+          patient_id: string | null
           operation_date: string
           hospital_name: string
           operation_type: string
+          completion_type: string | null
+          completion_amount: number | null
+          is_completed: boolean | null
+          completed_date: string | null
           notes: string | null
           doctor_id: string | null
           created_at: string
         }
         Insert: {
           id?: string
-          patient_id: string
+          patient_id?: string | null
           operation_date: string
           hospital_name: string
           operation_type: string
+          completion_type?: string | null
+          completion_amount?: number | null
+          is_completed?: boolean | null
+          completed_date?: string | null
           notes?: string | null
           doctor_id?: string | null
           created_at?: string
         }
         Update: {
           id?: string
-          patient_id?: string
+          patient_id?: string | null
           operation_date?: string
           hospital_name?: string
           operation_type?: string
+          completion_type?: string | null
+          completion_amount?: number | null
+          is_completed?: boolean | null
+          completed_date?: string | null
           notes?: string | null
           doctor_id?: string | null
           created_at?: string

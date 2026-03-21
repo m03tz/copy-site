@@ -283,10 +283,13 @@ CREATE TABLE IF NOT EXISTS operations (
   patient_id      UUID        REFERENCES patients(id) ON DELETE SET NULL,
   operation_date  DATE        NOT NULL,
   hospital_name   TEXT        NOT NULL,
-  operation_type  TEXT        NOT NULL,
-  completion_type TEXT,
-  notes           TEXT,
-  doctor_id       UUID        REFERENCES auth.users(id) ON DELETE SET NULL,
+  operation_type     TEXT        NOT NULL,
+  completion_type    TEXT,
+  is_completed       BOOLEAN,
+  completed_date     DATE,
+  completion_amount  NUMERIC(10,2),
+  notes              TEXT,
+  doctor_id          UUID        REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

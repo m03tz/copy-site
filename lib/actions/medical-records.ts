@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
 
 // ─── Shared helper ───────────────────────────────────────────────────────────
@@ -289,7 +290,8 @@ export async function updateVisitFee(
     return { error: 'Unauthorized' }
   }
 
-  const { error: updateError } = await supabase
+  const adminClient = createAdminClient()
+  const { error: updateError } = await adminClient
     .from('medical_records')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .update({ visit_fee: fee } as any)
@@ -300,6 +302,7 @@ export async function updateVisitFee(
   revalidatePath(`/doctor/patients/${patientId}`)
   revalidatePath(`/secretary/patients/${patientId}`)
   revalidatePath('/doctor/medical-records')
+  revalidatePath('/doctor/financial')
 
   return { success: true }
 }
@@ -329,10 +332,11 @@ export async function deleteVisitRecord(
     return { error: 'Only doctor or secretary can delete visit records' }
   }
 
-  const { error } = await supabase
+  const adminClient = createAdminClient()
+  const { error } = await adminClient
     .from('medical_records')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .update({ deleted_at: new Date().toISOString() } as any)
+    .update({ deleted_at: new Date().toISOString(), visit_fee: null } as any)
     .eq('id', recordId)
 
   if (error) return { error: error.message }
@@ -340,6 +344,7 @@ export async function deleteVisitRecord(
   revalidatePath(`/doctor/patients/${patientId}`)
   revalidatePath(`/secretary/patients/${patientId}`)
   revalidatePath('/doctor/medical-records')
+  revalidatePath('/doctor/financial')
 
   return { success: true }
 }

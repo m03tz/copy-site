@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export interface ExternalCost {
   id: string
@@ -88,7 +89,8 @@ export async function updateExternalCost(
     return { error: 'Only the doctor can update external costs' }
   }
 
-  const { error } = await supabase.from('external_costs').update({ amount }).eq('id', id)
+  const adminClient = createAdminClient()
+  const { error } = await adminClient.from('external_costs').update({ amount }).eq('id', id)
   if (error) return { error: error.message }
 
   revalidatePath('/doctor/financial')
@@ -115,7 +117,8 @@ export async function deleteExternalCost(
     return { error: 'Only the doctor can delete external costs' }
   }
 
-  const { error } = await supabase.from('external_costs').delete().eq('id', id)
+  const adminClient = createAdminClient()
+  const { error } = await adminClient.from('external_costs').delete().eq('id', id)
   if (error) return { error: error.message }
 
   revalidatePath('/doctor/financial')

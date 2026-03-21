@@ -94,6 +94,40 @@ export async function deleteStaffMember(
 
   const adminClient = createAdminClient()
 
+  // Reassign NOT-NULL doctor_id columns to the current doctor before deleting.
+  // ON DELETE SET NULL won't work if the column is still NOT NULL.
+  const tablesWithNotNullDoctorId = [
+    'medical_records',
+    'prescriptions',
+    'pregnancies',
+    'infertility_records',
+  ]
+  for (const table of tablesWithNotNullDoctorId) {
+    const { error: reassignErr } = await (adminClient as any)
+      .from(table)
+      .update({ doctor_id: user.id })
+      .eq('doctor_id', memberId)
+    if (reassignErr) return { error: `Failed to reassign ${table}: ${reassignErr.message}` }
+  }
+
+  // Nullify nullable FK columns that reference profiles
+  const nullableSteps: Array<{ table: string; column: string }> = [
+    { table: 'appointments', column: 'doctor_id' },
+    { table: 'appointments', column: 'created_by' },
+    { table: 'patient_files', column: 'uploaded_by' },
+    { table: 'invoices', column: 'doctor_id' },
+    { table: 'lab_tests', column: 'created_by' },
+    { table: 'external_costs', column: 'doctor_id' },
+    { table: 'operations', column: 'doctor_id' },
+  ]
+  for (const step of nullableSteps) {
+    const { error: nullErr } = await (adminClient as any)
+      .from(step.table)
+      .update({ [step.column]: null })
+      .eq(step.column, memberId)
+    if (nullErr) return { error: `Failed to nullify ${step.table}.${step.column}: ${nullErr.message}` }
+  }
+
   // Delete auth user — cascades to profiles
   const { error: deleteError } = await adminClient.auth.admin.deleteUser(memberId)
 

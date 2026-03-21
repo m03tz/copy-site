@@ -1,6 +1,6 @@
-﻿'use client'
+'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { format } from 'date-fns'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { TrendingUp, CalendarDays, Printer, Loader2, Pencil, Check, X, Trash2, Download } from 'lucide-react'
+import { TrendingUp, CalendarDays, Printer, Loader2, Pencil, Check, X, Trash2, Download, Search } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { getFinancialSummaryByDate, getFinancialRecords } from '@/lib/actions/invoices'
 import { updateVisitFee, deleteVisitRecord } from '@/lib/actions/medical-records'
@@ -58,6 +58,14 @@ export function FinancialSummary({ todayTotal, monthTotal, yearTotal }: Financia
   const [printTotal, setPrintTotal] = useState(0)
   const [printOpen, setPrintOpen] = useState(false)
 
+  // Search
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // Multi-select
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkDeleting, setBulkDeleting] = useState(false)
+  const [bulkConfirm, setBulkConfirm] = useState(false)
+
   // Inline fee editing state
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
@@ -66,6 +74,19 @@ export function FinancialSummary({ todayTotal, monthTotal, yearTotal }: Financia
   // Delete state
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  const filteredRecords = useMemo(() => {
+    if (!printRecords) return printRecords
+    if (!searchQuery.trim()) return printRecords
+    const q = searchQuery.toLowerCase()
+    return printRecords.filter(
+      (r) =>
+        r.patient_name.toLowerCase().includes(q) ||
+        (r.national_id ?? '').toLowerCase().includes(q) ||
+        (r.patient_code ?? '').toLowerCase().includes(q) ||
+        (r.phone ?? '').includes(q)
+    )
+  }, [printRecords, searchQuery])
 
   function handleDaySelect(date: Date | undefined) {
     setSelectedDate(date)
@@ -87,6 +108,8 @@ export function FinancialSummary({ todayTotal, monthTotal, yearTotal }: Financia
       if (result.records) {
         setPrintRecords(result.records)
         setPrintTotal(result.total ?? 0)
+        setSelectedIds(new Set())
+        setSearchQuery('')
         setPrintOpen(true)
       }
     })
@@ -108,7 +131,6 @@ export function FinancialSummary({ todayTotal, monthTotal, yearTotal }: Financia
         setPrintTotal(updated.reduce((acc, r) => acc + r.visit_fee, 0))
         return updated
       })
-      // Also refresh the day total if needed
       if (selectedDate) {
         const dateStr = format(selectedDate, 'yyyy-MM-dd')
         const res = await getFinancialSummaryByDate(dateStr)
@@ -134,9 +156,34 @@ export function FinancialSummary({ todayTotal, monthTotal, yearTotal }: Financia
         setPrintTotal(updated.reduce((acc, r) => acc + r.visit_fee, 0))
         return updated
       })
+      setSelectedIds((prev) => { const s = new Set(prev); s.delete(record.id); return s })
     }
     setDeletingId(null)
     setDeleteConfirmId(null)
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.size === 0 || !printRecords) return
+    setBulkDeleting(true)
+    const toDelete = printRecords.filter((r) => selectedIds.has(r.id))
+    for (const record of toDelete) {
+      const result = record.record_type === 'external'
+        ? await deleteExternalCost(record.id)
+        : record.record_type === 'operation'
+          ? await uncompleteOperation(record.id)
+          : await deleteVisitRecord(record.id, record.patient_id)
+      if (!result.error) {
+        setPrintRecords((prev) => {
+          if (!prev) return prev
+          const updated = prev.filter((r) => r.id !== record.id)
+          setPrintTotal(updated.reduce((acc, r) => acc + r.visit_fee, 0))
+          return updated
+        })
+      }
+    }
+    setSelectedIds(new Set())
+    setBulkDeleting(false)
+    setBulkConfirm(false)
   }
 
   function handleExportExcel() {
@@ -159,6 +206,30 @@ export function FinancialSummary({ todayTotal, monthTotal, yearTotal }: Financia
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Financial Records')
     XLSX.writeFile(wb, `financial-${from}-${to}.xlsx`)
+  }
+
+  const allVisibleIds = filteredRecords?.map((r) => r.id) ?? []
+  const allVisibleSelected = allVisibleIds.length > 0 && allVisibleIds.every((id) => selectedIds.has(id))
+  const someSelected = selectedIds.size > 0
+
+  function toggleSelectAll() {
+    if (allVisibleSelected) {
+      setSelectedIds((prev) => {
+        const s = new Set(prev)
+        allVisibleIds.forEach((id) => s.delete(id))
+        return s
+      })
+    } else {
+      setSelectedIds((prev) => new Set([...prev, ...allVisibleIds]))
+    }
+  }
+
+  function toggleRow(id: string) {
+    setSelectedIds((prev) => {
+      const s = new Set(prev)
+      s.has(id) ? s.delete(id) : s.add(id)
+      return s
+    })
   }
 
   const todayStr = format(new Date(), 'yyyy-MM-dd')
@@ -292,11 +363,63 @@ export function FinancialSummary({ todayTotal, monthTotal, yearTotal }: Financia
           {printRecords && printRecords.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">{t('noInvoices')}</p>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
+              {/* Search + bulk delete toolbar */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="relative flex-1 min-w-[180px]">
+                  <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                  <Input
+                    placeholder="بحث باسم المريضة أو الرقم..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="h-8 text-xs pr-8"
+                  />
+                </div>
+                {someSelected && (
+                  bulkConfirm ? (
+                    <div className="flex items-center gap-1.5 text-xs">
+                      <span className="text-destructive font-medium">حذف {selectedIds.size} سجل؟</span>
+                      <button
+                        onClick={handleBulkDelete}
+                        disabled={bulkDeleting}
+                        className="text-destructive hover:text-destructive/80 disabled:opacity-50"
+                      >
+                        {bulkDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                      </button>
+                      <button
+                        onClick={() => setBulkConfirm(false)}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="h-8 gap-1.5 text-xs"
+                      onClick={() => setBulkConfirm(true)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      حذف المحدد ({selectedIds.size})
+                    </Button>
+                  )
+                )}
+              </div>
+
               <div className="overflow-x-auto">
                 <table className="w-full text-sm border-collapse">
                   <thead>
                     <tr className="border-b bg-muted/40">
+                      <th className="py-2 px-3">
+                        <input
+                          type="checkbox"
+                          checked={allVisibleSelected}
+                          onChange={toggleSelectAll}
+                          className="rounded cursor-pointer"
+                          title="تحديد الكل"
+                        />
+                      </th>
                       <th className="text-start py-2 px-3 font-medium">#</th>
                       <th className="text-start py-2 px-3 font-medium">المريضة</th>
                       <th className="text-start py-2 px-3 font-medium">الرقم الوطني</th>
@@ -309,8 +432,16 @@ export function FinancialSummary({ todayTotal, monthTotal, yearTotal }: Financia
                     </tr>
                   </thead>
                   <tbody>
-                    {printRecords?.map((r, i) => (
-                      <tr key={r.id} className="border-b last:border-0">
+                    {filteredRecords?.map((r, i) => (
+                      <tr key={r.id} className={`border-b last:border-0 ${selectedIds.has(r.id) ? 'bg-muted/30' : ''}`}>
+                        <td className="py-2 px-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(r.id)}
+                            onChange={() => toggleRow(r.id)}
+                            className="rounded cursor-pointer"
+                          />
+                        </td>
                         <td className="py-2 px-3 text-muted-foreground">{i + 1}</td>
                         <td className="py-2 px-3">{r.patient_name}</td>
                         <td className="py-2 px-3 text-muted-foreground">{r.national_id ?? '—'}</td>
@@ -403,7 +534,7 @@ export function FinancialSummary({ todayTotal, monthTotal, yearTotal }: Financia
                       </tr>
                     ))}
                     <tr className="bg-muted/40 font-bold">
-                      <td colSpan={8} className="py-2 px-3 text-end">الإجمالي</td>
+                      <td colSpan={9} className="py-2 px-3 text-end">الإجمالي</td>
                       <td className="py-2 px-3 text-primary">{printTotal.toFixed(2)}</td>
                     </tr>
                   </tbody>

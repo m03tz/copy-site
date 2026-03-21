@@ -221,9 +221,9 @@ export async function getVisitorsSummary(): Promise<{
   const yearStart = new Date(now.getFullYear(), 0, 1).toISOString()
 
   const [todayRes, monthRes, yearRes] = await Promise.all([
-    supabase.from('medical_records').select('id', { count: 'exact', head: true }).eq('is_ended', true).gte('visit_date', todayStart).lte('visit_date', todayEnd) as unknown as Promise<{ count: number | null }>,
-    supabase.from('medical_records').select('id', { count: 'exact', head: true }).eq('is_ended', true).gte('visit_date', monthStart) as unknown as Promise<{ count: number | null }>,
-    supabase.from('medical_records').select('id', { count: 'exact', head: true }).eq('is_ended', true).gte('visit_date', yearStart) as unknown as Promise<{ count: number | null }>,
+    supabase.from('medical_records').select('id', { count: 'exact', head: true }).eq('is_ended', true).or('deleted_at.is.null,visit_fee.not.is.null').gte('visit_date', todayStart).lte('visit_date', todayEnd) as unknown as Promise<{ count: number | null }>,
+    supabase.from('medical_records').select('id', { count: 'exact', head: true }).eq('is_ended', true).or('deleted_at.is.null,visit_fee.not.is.null').gte('visit_date', monthStart) as unknown as Promise<{ count: number | null }>,
+    supabase.from('medical_records').select('id', { count: 'exact', head: true }).eq('is_ended', true).or('deleted_at.is.null,visit_fee.not.is.null').gte('visit_date', yearStart) as unknown as Promise<{ count: number | null }>,
   ])
 
   return {
@@ -251,6 +251,7 @@ export async function getVisitorCountByDate(dateStr: string): Promise<{
     .from('medical_records')
     .select('id', { count: 'exact', head: true })
     .eq('is_ended', true)
+    .or('deleted_at.is.null,visit_fee.not.is.null')
     .gte('visit_date', dayStart)
     .lte('visit_date', dayEnd) as { count: number | null }
 
@@ -390,16 +391,16 @@ export async function getFinancialRecords(fromDate: string, toDate: string): Pro
   if (!user) return { error: 'Unauthorized' }
 
   const [visitsRes, extRes, opRes] = await Promise.all([
-    supabase.from('medical_records').select('id, patient_id, visit_date, visit_fee, visit_type').eq('is_ended', true).gte('visit_date', fromDate).lte('visit_date', toDate).order('visit_date', { ascending: true }) as unknown as Promise<{
-      data: { id: string; patient_id: string; visit_date: string; visit_fee: number | null; visit_type: string | null }[] | null
+    supabase.from('medical_records').select('id, patient_id, visit_date, visit_fee, visit_type').eq('is_ended', true).not('visit_fee', 'is', null).gte('visit_date', fromDate).lte('visit_date', toDate).order('visit_date', { ascending: true }) as unknown as Promise<{
+      data: { id: string; patient_id: string | null; visit_date: string; visit_fee: number | null; visit_type: string | null }[] | null
       error: { message: string } | null
     }>,
     supabase.from('external_costs').select('id, patient_id, cost_date, amount, visit_type').gte('cost_date', fromDate).lte('cost_date', toDate).order('cost_date', { ascending: true }) as unknown as Promise<{
-      data: { id: string; patient_id: string; cost_date: string; amount: number; visit_type: string }[] | null
+      data: { id: string; patient_id: string | null; cost_date: string; amount: number; visit_type: string }[] | null
       error: { message: string } | null
     }>,
     supabase.from('operations').select('id, patient_id, completed_date, completion_amount, operation_type').eq('is_completed', true).not('completion_amount', 'is', null).gte('completed_date', fromDate).lte('completed_date', toDate).order('completed_date', { ascending: true }) as unknown as Promise<{
-      data: { id: string; patient_id: string; completed_date: string; completion_amount: number; operation_type: string }[] | null
+      data: { id: string; patient_id: string | null; completed_date: string; completion_amount: number; operation_type: string }[] | null
       error: { message: string } | null
     }>,
   ])
@@ -412,56 +413,58 @@ export async function getFinancialRecords(fromDate: string, toDate: string): Pro
 
   if (visitData.length === 0 && extData.length === 0 && opData.length === 0) return { records: [], total: 0 }
 
-  // Collect all unique patient IDs
+  // Collect all unique non-null patient IDs
   const allPatientIds = [...new Set([
-    ...visitData.map((r) => r.patient_id),
-    ...extData.map((r) => r.patient_id),
-    ...opData.map((r) => r.patient_id),
-  ])]
+    ...visitData.map((r) => r.patient_id).filter(Boolean),
+    ...extData.map((r) => r.patient_id).filter(Boolean),
+    ...opData.map((r) => r.patient_id).filter(Boolean),
+  ])] as string[]
 
   const [profilesRes, patientsRes] = await Promise.all([
-    supabase.from('profiles').select('id, full_name_ar, phone').in('id', allPatientIds),
-    supabase.from('patients').select('id, national_id, patient_code').in('id', allPatientIds),
+    allPatientIds.length > 0 ? supabase.from('profiles').select('id, full_name_ar, phone').in('id', allPatientIds) : Promise.resolve({ data: [] }),
+    allPatientIds.length > 0 ? supabase.from('patients').select('id, national_id, patient_code').in('id', allPatientIds) : Promise.resolve({ data: [] }),
   ])
 
   const profileMap = new Map<string, { id: string; full_name_ar: string; phone: string | null }>((profilesRes.data ?? []).map((p: { id: string; full_name_ar: string; phone: string | null }) => [p.id, p] as [string, { id: string; full_name_ar: string; phone: string | null }]))
   const patientMap = new Map<string, { id: string; national_id: string | null; patient_code: string | null }>((patientsRes.data ?? []).map((p: { id: string; national_id: string | null; patient_code: string | null }) => [p.id, p] as [string, { id: string; national_id: string | null; patient_code: string | null }]))
 
+  const DELETED = 'مريضة محذوفة'
+
   const visitRecords = visitData.map((rec) => ({
     id: rec.id,
-    patient_name: profileMap.get(rec.patient_id)?.full_name_ar ?? '—',
-    patient_id: rec.patient_id,
+    patient_name: rec.patient_id ? (profileMap.get(rec.patient_id)?.full_name_ar ?? DELETED) : DELETED,
+    patient_id: rec.patient_id ?? '',
     visit_date: rec.visit_date,
     visit_fee: rec.visit_fee ?? 0,
-    national_id: patientMap.get(rec.patient_id)?.national_id ?? null,
-    patient_code: patientMap.get(rec.patient_id)?.patient_code ?? null,
-    phone: profileMap.get(rec.patient_id)?.phone ?? null,
+    national_id: rec.patient_id ? (patientMap.get(rec.patient_id)?.national_id ?? null) : null,
+    patient_code: rec.patient_id ? (patientMap.get(rec.patient_id)?.patient_code ?? null) : null,
+    phone: rec.patient_id ? (profileMap.get(rec.patient_id)?.phone ?? null) : null,
     visit_type: rec.visit_type ?? undefined,
     record_type: 'visit' as const,
   }))
 
   const extRecords = extData.map((rec) => ({
     id: rec.id,
-    patient_name: profileMap.get(rec.patient_id)?.full_name_ar ?? '—',
-    patient_id: rec.patient_id,
+    patient_name: rec.patient_id ? (profileMap.get(rec.patient_id)?.full_name_ar ?? DELETED) : DELETED,
+    patient_id: rec.patient_id ?? '',
     visit_date: rec.cost_date,
     visit_fee: rec.amount,
-    national_id: patientMap.get(rec.patient_id)?.national_id ?? null,
-    patient_code: patientMap.get(rec.patient_id)?.patient_code ?? null,
-    phone: profileMap.get(rec.patient_id)?.phone ?? null,
+    national_id: rec.patient_id ? (patientMap.get(rec.patient_id)?.national_id ?? null) : null,
+    patient_code: rec.patient_id ? (patientMap.get(rec.patient_id)?.patient_code ?? null) : null,
+    phone: rec.patient_id ? (profileMap.get(rec.patient_id)?.phone ?? null) : null,
     visit_type: rec.visit_type,
     record_type: 'external' as const,
   }))
 
   const opRecords = opData.map((rec) => ({
     id: rec.id,
-    patient_name: profileMap.get(rec.patient_id)?.full_name_ar ?? '—',
-    patient_id: rec.patient_id,
+    patient_name: rec.patient_id ? (profileMap.get(rec.patient_id)?.full_name_ar ?? DELETED) : DELETED,
+    patient_id: rec.patient_id ?? '',
     visit_date: rec.completed_date,
     visit_fee: rec.completion_amount,
-    national_id: patientMap.get(rec.patient_id)?.national_id ?? null,
-    patient_code: patientMap.get(rec.patient_id)?.patient_code ?? null,
-    phone: profileMap.get(rec.patient_id)?.phone ?? null,
+    national_id: rec.patient_id ? (patientMap.get(rec.patient_id)?.national_id ?? null) : null,
+    patient_code: rec.patient_id ? (patientMap.get(rec.patient_id)?.patient_code ?? null) : null,
+    phone: rec.patient_id ? (profileMap.get(rec.patient_id)?.phone ?? null) : null,
     visit_type: rec.operation_type,
     record_type: 'operation' as const,
   }))
@@ -499,36 +502,37 @@ export async function getVisitorsByDateRange(fromDate: string, toDate: string): 
     .from('medical_records')
     .select('id, patient_id, visit_date, visit_fee, visit_type')
     .eq('is_ended', true)
-    .not('visit_fee', 'is', null)
+    .or('deleted_at.is.null,visit_fee.not.is.null')
     .gte('visit_date', fromDate)
     .lte('visit_date', toDate)
     .order('visit_date', { ascending: true }) as {
-      data: { id: string; patient_id: string; visit_date: string; visit_fee: number | null; visit_type: string | null }[] | null
+      data: { id: string; patient_id: string | null; visit_date: string; visit_fee: number | null; visit_type: string | null }[] | null
       error: { message: string } | null
     }
 
   if (error) return { error: error.message }
   if (!data || data.length === 0) return { records: [] }
 
-  const patientIds = [...new Set(data.map((r) => r.patient_id))]
+  const patientIds = [...new Set(data.map((r) => r.patient_id).filter(Boolean))] as string[]
 
   const [profilesRes, patientsRes] = await Promise.all([
-    supabase.from('profiles').select('id, full_name_ar, phone').in('id', patientIds),
-    supabase.from('patients').select('id, national_id, patient_code').in('id', patientIds),
+    patientIds.length > 0 ? supabase.from('profiles').select('id, full_name_ar, phone').in('id', patientIds) : Promise.resolve({ data: [] }),
+    patientIds.length > 0 ? supabase.from('patients').select('id, national_id, patient_code').in('id', patientIds) : Promise.resolve({ data: [] }),
   ])
 
   const profileMap = new Map((profilesRes.data ?? []).map((p: { id: string; full_name_ar: string; phone: string | null }) => [p.id, p]))
   const patientMap = new Map((patientsRes.data ?? []).map((p: { id: string; national_id: string | null; patient_code: string | null }) => [p.id, p]))
 
+  const DELETED = 'مريضة محذوفة'
   const records = data.map((rec) => ({
     id: rec.id,
-    patient_name: profileMap.get(rec.patient_id)?.full_name_ar ?? '—',
-    patient_id: rec.patient_id,
+    patient_name: rec.patient_id ? (profileMap.get(rec.patient_id)?.full_name_ar ?? DELETED) : DELETED,
+    patient_id: rec.patient_id ?? '',
     visit_date: rec.visit_date,
     visit_fee: rec.visit_fee,
-    national_id: patientMap.get(rec.patient_id)?.national_id ?? null,
-    patient_code: patientMap.get(rec.patient_id)?.patient_code ?? null,
-    phone: profileMap.get(rec.patient_id)?.phone ?? null,
+    national_id: rec.patient_id ? (patientMap.get(rec.patient_id)?.national_id ?? null) : null,
+    patient_code: rec.patient_id ? (patientMap.get(rec.patient_id)?.patient_code ?? null) : null,
+    phone: rec.patient_id ? (profileMap.get(rec.patient_id)?.phone ?? null) : null,
     visit_type: rec.visit_type ?? null,
   }))
 

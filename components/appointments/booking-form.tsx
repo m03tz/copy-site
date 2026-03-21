@@ -132,7 +132,7 @@ export function BookingForm({ patients, doctorId, preselectedPatientId, preselec
       setEditSlots(res.slots ?? [])
       // Pre-select the existing slot
       const existing = (res.slots ?? []).find(
-        (s) => s.start === format(new Date(appt.scheduled_start), 'HH:mm')
+        (s) => s.start === appt.scheduled_start
       )
       if (existing) setEditSlot(existing)
     })
@@ -153,15 +153,12 @@ export function BookingForm({ patients, doctorId, preselectedPatientId, preselec
   function handleEditSave() {
     if (!editingAppt || !editType || !editDate || !editSlot) return
     setEditError(null)
-    const dateStr = format(editDate, 'yyyy-MM-dd')
-    const scheduled_start = `${dateStr}T${editSlot.start}:00`
-    const scheduled_end   = `${dateStr}T${editSlot.end}:00`
     startEditTransition(async () => {
       const res = await updateAppointment({
         id: editingAppt.id,
         appointment_type: editType,
-        scheduled_start,
-        scheduled_end,
+        scheduled_start: editSlot.start,
+        scheduled_end: editSlot.end,
         notes: editNotes || undefined,
       })
       if (res.error) {

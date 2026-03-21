@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { format } from 'date-fns'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
@@ -13,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Users, CalendarDays, Loader2, Printer, Check, X, Trash2 } from 'lucide-react'
+import { Users, CalendarDays, Loader2, Printer, Check, X, Trash2, Search } from 'lucide-react'
 import { getVisitorCountByDate, getVisitorsByDateRange } from '@/lib/actions/invoices'
 import { deleteVisitRecord } from '@/lib/actions/medical-records'
 import { getClinicHeaderHtml, getClinicHeaderStyles } from '@/lib/print-utils'
@@ -54,6 +55,14 @@ export function VisitorsSummary({ todayCount, monthCount, yearCount }: VisitorsS
   const [reportRecords, setReportRecords] = useState<VisitorRecord[] | null>(null)
   const [reportOpen, setReportOpen] = useState(false)
 
+  // Search
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // Multi-select
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkDeleting, setBulkDeleting] = useState(false)
+  const [bulkConfirm, setBulkConfirm] = useState(false)
+
   // Delete state
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -61,6 +70,19 @@ export function VisitorsSummary({ todayCount, monthCount, yearCount }: VisitorsS
   const todayStr = format(new Date(), 'yyyy-MM-dd')
   const selectedStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : todayStr
   const isToday = selectedStr === todayStr
+
+  const filteredRecords = useMemo(() => {
+    if (!reportRecords) return reportRecords
+    if (!searchQuery.trim()) return reportRecords
+    const q = searchQuery.toLowerCase()
+    return reportRecords.filter(
+      (r) =>
+        r.patient_name.toLowerCase().includes(q) ||
+        (r.national_id ?? '').toLowerCase().includes(q) ||
+        (r.patient_code ?? '').toLowerCase().includes(q) ||
+        (r.phone ?? '').includes(q)
+    )
+  }, [reportRecords, searchQuery])
 
   function handleDaySelect(date: Date | undefined) {
     setSelectedDate(date)
@@ -81,6 +103,8 @@ export function VisitorsSummary({ todayCount, monthCount, yearCount }: VisitorsS
       const result = await getVisitorsByDateRange(from, to)
       if (result.records) {
         setReportRecords(result.records)
+        setSelectedIds(new Set())
+        setSearchQuery('')
         setReportOpen(true)
       }
     })
@@ -91,7 +115,7 @@ export function VisitorsSummary({ todayCount, monthCount, yearCount }: VisitorsS
     const result = await deleteVisitRecord(record.id, record.patient_id)
     if (!result.error) {
       setReportRecords((prev) => prev ? prev.filter((r) => r.id !== record.id) : prev)
-      // Also refresh day count if the deleted visit matches the selected day
+      setSelectedIds((prev) => { const s = new Set(prev); s.delete(record.id); return s })
       if (record.visit_date === selectedStr) {
         const res = await getVisitorCountByDate(selectedStr)
         setDayCount(res.count ?? 0)
@@ -99,6 +123,48 @@ export function VisitorsSummary({ todayCount, monthCount, yearCount }: VisitorsS
     }
     setDeletingId(null)
     setDeleteConfirmId(null)
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.size === 0 || !reportRecords) return
+    setBulkDeleting(true)
+    const toDelete = reportRecords.filter((r) => selectedIds.has(r.id))
+    for (const record of toDelete) {
+      const result = await deleteVisitRecord(record.id, record.patient_id)
+      if (!result.error) {
+        setReportRecords((prev) => prev ? prev.filter((r) => r.id !== record.id) : prev)
+      }
+    }
+    // Refresh day count
+    const res = await getVisitorCountByDate(selectedStr)
+    setDayCount(res.count ?? 0)
+    setSelectedIds(new Set())
+    setBulkDeleting(false)
+    setBulkConfirm(false)
+  }
+
+  const allVisibleIds = filteredRecords?.map((r) => r.id) ?? []
+  const allVisibleSelected = allVisibleIds.length > 0 && allVisibleIds.every((id) => selectedIds.has(id))
+  const someSelected = selectedIds.size > 0
+
+  function toggleSelectAll() {
+    if (allVisibleSelected) {
+      setSelectedIds((prev) => {
+        const s = new Set(prev)
+        allVisibleIds.forEach((id) => s.delete(id))
+        return s
+      })
+    } else {
+      setSelectedIds((prev) => new Set([...prev, ...allVisibleIds]))
+    }
+  }
+
+  function toggleRow(id: string) {
+    setSelectedIds((prev) => {
+      const s = new Set(prev)
+      s.has(id) ? s.delete(id) : s.add(id)
+      return s
+    })
   }
 
   function handlePrintWindow() {
@@ -304,11 +370,63 @@ export function VisitorsSummary({ todayCount, monthCount, yearCount }: VisitorsS
           {reportRecords && reportRecords.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">{t('noVisitors')}</p>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
+              {/* Search + bulk delete toolbar */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="relative flex-1 min-w-[180px]">
+                  <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                  <Input
+                    placeholder="بحث باسم المريضة أو الرقم..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="h-8 text-xs pr-8"
+                  />
+                </div>
+                {someSelected && (
+                  bulkConfirm ? (
+                    <div className="flex items-center gap-1.5 text-xs">
+                      <span className="text-destructive font-medium">حذف {selectedIds.size} سجل؟</span>
+                      <button
+                        onClick={handleBulkDelete}
+                        disabled={bulkDeleting}
+                        className="text-destructive hover:text-destructive/80 disabled:opacity-50"
+                      >
+                        {bulkDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                      </button>
+                      <button
+                        onClick={() => setBulkConfirm(false)}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="h-8 gap-1.5 text-xs"
+                      onClick={() => setBulkConfirm(true)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      حذف المحدد ({selectedIds.size})
+                    </Button>
+                  )
+                )}
+              </div>
+
               <div className="overflow-x-auto">
                 <table className="w-full text-sm border-collapse">
                   <thead>
                     <tr className="border-b bg-muted/40">
+                      <th className="py-2 px-3">
+                        <input
+                          type="checkbox"
+                          checked={allVisibleSelected}
+                          onChange={toggleSelectAll}
+                          className="rounded cursor-pointer"
+                          title="تحديد الكل"
+                        />
+                      </th>
                       <th className="text-start py-2 px-3 font-medium">#</th>
                       <th className="text-start py-2 px-3 font-medium">{t('patient')}</th>
                       <th className="text-start py-2 px-3 font-medium">رقم الملف</th>
@@ -321,8 +439,16 @@ export function VisitorsSummary({ todayCount, monthCount, yearCount }: VisitorsS
                     </tr>
                   </thead>
                   <tbody>
-                    {reportRecords?.map((r, i) => (
-                      <tr key={r.id} className="border-b last:border-0">
+                    {filteredRecords?.map((r, i) => (
+                      <tr key={r.id} className={`border-b last:border-0 ${selectedIds.has(r.id) ? 'bg-muted/30' : ''}`}>
+                        <td className="py-2 px-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(r.id)}
+                            onChange={() => toggleRow(r.id)}
+                            className="rounded cursor-pointer"
+                          />
+                        </td>
                         <td className="py-2 px-3 text-muted-foreground">{i + 1}</td>
                         <td className="py-2 px-3 whitespace-nowrap">{r.patient_name}</td>
                         <td className="py-2 px-3 font-mono text-xs">{r.patient_code ?? '—'}</td>
@@ -373,8 +499,8 @@ export function VisitorsSummary({ todayCount, monthCount, yearCount }: VisitorsS
                       </tr>
                     ))}
                     <tr className="bg-muted/40 font-bold">
-                      <td colSpan={7} className="py-2 px-3 text-end">{t('total')}</td>
-                      <td colSpan={2} className="py-2 px-3 text-primary">{reportRecords?.length ?? 0}</td>
+                      <td colSpan={8} className="py-2 px-3 text-end">{t('total')}</td>
+                      <td colSpan={2} className="py-2 px-3 text-primary">{filteredRecords?.length ?? 0}</td>
                     </tr>
                   </tbody>
                 </table>

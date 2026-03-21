@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export interface Operation {
   id: string
@@ -204,7 +205,8 @@ export async function updateCompletedOperation(
     return { error: 'Only the doctor can update completed operations' }
   }
 
-  const { error } = await supabase
+  const adminClient = createAdminClient()
+  const { error } = await adminClient
     .from('operations')
     .update({ completion_amount: amount })
     .eq('id', id)
@@ -234,7 +236,8 @@ export async function uncompleteOperation(
     return { error: 'Only the doctor can update operations' }
   }
 
-  const { error } = await supabase
+  const adminClient = createAdminClient()
+  const { error } = await adminClient
     .from('operations')
     .update({ is_completed: false, completed_date: null, completion_amount: null })
     .eq('id', id)

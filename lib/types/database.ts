@@ -666,6 +666,36 @@ export interface Database {
         }
         Relationships: []
       }
+      external_costs: {
+        Row: {
+          id: string
+          patient_id: string
+          cost_date: string
+          visit_type: string
+          amount: number
+          doctor_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          patient_id: string
+          cost_date: string
+          visit_type: string
+          amount: number
+          doctor_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          patient_id?: string
+          cost_date?: string
+          visit_type?: string
+          amount?: number
+          doctor_id?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

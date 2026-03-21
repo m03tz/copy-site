@@ -376,7 +376,70 @@ export async function deletePatient(
 
   const adminClient = createAdminClient()
 
-  // Delete auth user — cascades to profiles -> patients -> all related tables
+  // Explicitly delete all patient data before removing the auth user.
+  // Each step checks for errors so failures are surfaced instead of silently ignored.
+
+  // Get pregnancy IDs first (needed for pregnancy_measurements)
+  const { data: pregnancies } = await adminClient
+    .from('pregnancies')
+    .select('id')
+    .eq('patient_id', patientId)
+  if (pregnancies && pregnancies.length > 0) {
+    const { error: pmErr } = await adminClient
+      .from('pregnancy_measurements')
+      .delete()
+      .in('pregnancy_id', pregnancies.map((p) => p.id))
+    if (pmErr) return { error: pmErr.message }
+  }
+
+  // ── Preserve visit records (medical_records) ──────────────────────────────
+  // Explicitly NULL out patient_id on medical_records BEFORE deleting the patient row.
+  // This guarantees visit fees survive in Financial/Visitors reports as "مريضة محذوفة"
+  // regardless of the DB FK cascade behaviour.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: mrNullErr } = await (adminClient as any)
+    .from('medical_records')
+    .update({ patient_id: null })
+    .eq('patient_id', patientId)
+  if (mrNullErr) return { error: `Failed to preserve visit records: ${mrNullErr.message}` }
+
+  // ── Preserve financial records (invoices / external_costs / operations) ──
+  // Explicitly NULL out patient_id on financial tables BEFORE deleting the patient row,
+  // for the same reason as above (belt-and-suspenders on top of migration 31).
+  for (const financialTable of ['invoices', 'external_costs', 'operations'] as const) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: ftErr } = await (adminClient as any)
+      .from(financialTable)
+      .update({ patient_id: null })
+      .eq('patient_id', patientId)
+    if (ftErr) return { error: `Failed to preserve ${financialTable}: ${ftErr.message}` }
+  }
+
+  const steps: Array<{ table: string; column: string }> = [
+    { table: 'lab_tests', column: 'patient_id' },
+    { table: 'infertility_records', column: 'patient_id' },
+    { table: 'pregnancies', column: 'patient_id' },
+    { table: 'prescriptions', column: 'patient_id' },
+    { table: 'patient_files', column: 'patient_id' },
+    { table: 'appointments', column: 'patient_id' },
+  ]
+
+  for (const step of steps) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: stepErr } = await (adminClient as any)
+      .from(step.table)
+      .delete()
+      .eq(step.column, patientId)
+    if (stepErr) return { error: `Failed to delete ${step.table}: ${stepErr.message}` }
+  }
+
+  const { error: patientsErr } = await adminClient.from('patients').delete().eq('id', patientId)
+  if (patientsErr) return { error: patientsErr.message }
+
+  const { error: profilesErr } = await adminClient.from('profiles').delete().eq('id', patientId)
+  if (profilesErr) return { error: profilesErr.message }
+
+  // Delete auth user
   const { error: deleteError } = await adminClient.auth.admin.deleteUser(patientId)
 
   if (deleteError) return { error: deleteError.message }

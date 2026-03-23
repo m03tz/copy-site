@@ -16,7 +16,6 @@ type Profile = {
 }
 
 export async function getEmailByPhone(phone: string): Promise<string | null> {
-  // Must use admin client to bypass RLS since user is not authenticated yet
   const { createAdminClient } = await import('@/lib/supabase/admin')
   const admin = createAdminClient()
 

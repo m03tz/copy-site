@@ -44,7 +44,6 @@ export function StaffMemberDialog({ member, open, onOpenChange }: StaffMemberDia
   const [nameAr, setNameAr] = useState(member.full_name_ar)
   const [nameEn, setNameEn] = useState(member.full_name_en ?? '')
   const [phone, setPhone] = useState(member.phone)
-  const [email, setEmail] = useState(member.email ?? '')
 
   // Password
   const [newPassword, setNewPassword] = useState('')
@@ -64,7 +63,7 @@ export function StaffMemberDialog({ member, open, onOpenChange }: StaffMemberDia
       full_name_ar: nameAr,
       full_name_en: nameEn || null,
       phone,
-      email: email || null,
+      email: null,
     })
     if (result.error) {
       setMessage({ type: 'error', text: result.error })
@@ -119,7 +118,6 @@ export function StaffMemberDialog({ member, open, onOpenChange }: StaffMemberDia
               <InfoRow label={t('staffNameAr')} value={member.full_name_ar} />
               {member.full_name_en && <InfoRow label={t('staffNameEn')} value={member.full_name_en} />}
               <InfoRow label={t('staffPhone')} value={member.phone} dir="ltr" />
-              {member.email && <InfoRow label={t('staffEmail')} value={member.email} dir="ltr" />}
               <InfoRow label={t('staffRole')} value={member.role === 'doctor' ? t('roleDoctor') : t('roleSecretary')} />
 
               <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
@@ -140,10 +138,6 @@ export function StaffMemberDialog({ member, open, onOpenChange }: StaffMemberDia
                 <Label>{t('staffPhone')}</Label>
                 <Input value={phone} onChange={(e) => setPhone(e.target.value)} dir="ltr" required />
               </div>
-              <div className="space-y-1">
-                <Label>{t('staffEmail')}</Label>
-                <Input value={email} onChange={(e) => setEmail(e.target.value)} dir="ltr" type="email" />
-              </div>
               <div className="flex gap-2">
                 <Button size="sm" onClick={handleSave} disabled={isPending}>
                   {isPending ? '...' : tCommon('save')}
@@ -153,7 +147,6 @@ export function StaffMemberDialog({ member, open, onOpenChange }: StaffMemberDia
                   setNameAr(member.full_name_ar)
                   setNameEn(member.full_name_en ?? '')
                   setPhone(member.phone)
-                  setEmail(member.email ?? '')
                 }}>
                   {tCommon('cancel')}
                 </Button>

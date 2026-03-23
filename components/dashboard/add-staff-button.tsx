@@ -96,16 +96,18 @@ export function AddStaffButton() {
               <Input id="staff_name_en" name="full_name_en" dir="ltr" />
             </div>
 
-            {/* Email */}
-            <div className="space-y-1">
-              <Label htmlFor="staff_email">{t('staffEmail')}</Label>
-              <Input id="staff_email" name="email" type="email" dir="ltr" required />
-            </div>
-
             {/* Phone */}
             <div className="space-y-1">
               <Label htmlFor="staff_phone">{t('staffPhone')}</Label>
               <Input id="staff_phone" name="phone" dir="ltr" required />
+            </div>
+
+            {/* Email (optional) */}
+            <div className="space-y-1">
+              <Label htmlFor="staff_email">
+                {t('staffEmail')} <span className="text-muted-foreground text-xs">({t('optional')})</span>
+              </Label>
+              <Input id="staff_email" name="email" type="email" dir="ltr" placeholder="example@email.com" />
             </div>
 
             {/* Password */}

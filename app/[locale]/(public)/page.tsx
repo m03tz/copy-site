@@ -201,12 +201,6 @@ export default function HomePage() {
         </section>
       </main>
 
-      <footer className="py-8 border-t bg-slate-50">
-        <div className="container mx-auto px-4 text-center space-y-2">
-          <p className="text-sm font-bold text-slate-900">{t('clinicName')}</p>
-          <p className="text-slate-400 text-xs font-medium">{t('footerRights')}</p>
-        </div>
-      </footer>
     </div>
   )
 }

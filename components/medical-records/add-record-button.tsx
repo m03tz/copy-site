@@ -73,11 +73,12 @@ export function AddRecordButton({ patients }: AddRecordButtonProps) {
       return
     }
 
-    if (visitNote) {
-      formData.set('notes', visitNote)
-    } else {
-      formData.delete('notes')
+    if (!visitNote) {
+      setError(locale === 'ar' ? 'الملاحظات السريرية مطلوبة' : 'Clinical Notes is required')
+      return
     }
+
+    formData.set('notes', visitNote)
 
     formData.set('patient_id', patientId)
 
@@ -219,7 +220,7 @@ export function AddRecordButton({ patients }: AddRecordButtonProps) {
 
             {/* Notes — ANC / GYNE */}
             <div className="space-y-1">
-              <Label>{t('form.notes')}</Label>
+              <Label>{t('form.notes')} <span className="text-destructive">*</span></Label>
               <Select value={visitNote} onValueChange={setVisitNote}>
                 <SelectTrigger>
                   <SelectValue placeholder={t('form.notes')} />

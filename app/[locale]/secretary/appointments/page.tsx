@@ -3,16 +3,12 @@ import { createClient } from '@/lib/supabase/server'
 import { AppointmentsTabs } from '@/components/appointments/appointments-tabs'
 import { BookAppointmentButton } from '@/components/appointments/book-appointment-button'
 import { ExportAppointmentsButton } from '@/components/export/export-appointments-button'
-import { deleteStaleAppointments } from '@/lib/actions/appointments'
 import { format } from 'date-fns'
 
 export default async function SecretaryAppointmentsPage() {
   const t = await getTranslations('appointments')
 
   const supabase = await createClient()
-
-  // Auto-delete stale unattended appointments (scheduled/confirmed, >24h past)
-  await deleteStaleAppointments()
 
   // Get first doctor (secretary manages one clinic)
   const { data: doctorProfiles } = await supabase

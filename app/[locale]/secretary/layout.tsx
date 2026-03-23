@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { redirect } from 'next/navigation'
 import { getAuthenticatedUser, signOut } from '@/lib/actions/auth'
 import { Link } from '@/i18n/routing'

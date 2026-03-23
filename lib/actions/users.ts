@@ -8,11 +8,11 @@ import { z } from 'zod'
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
 const createStaffSchema = z.object({
-  email: z.string().email('Invalid email'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   full_name_ar: z.string().min(1, 'Arabic name is required'),
   full_name_en: z.string().optional(),
   phone: z.string().min(1, 'Phone is required'),
+  email: z.string().email('Invalid email').optional().or(z.literal('')),
   role: z.enum(['doctor', 'secretary']),
 })
 
@@ -49,11 +49,11 @@ export async function createStaffMember(
   }
 
   const raw = {
-    email: formData.get('email') as string,
     password: formData.get('password') as string,
     full_name_ar: formData.get('full_name_ar') as string,
     full_name_en: (formData.get('full_name_en') as string) || undefined,
     phone: formData.get('phone') as string,
+    email: (formData.get('email') as string) || undefined,
     role: formData.get('role') as string,
   }
 
@@ -64,7 +64,10 @@ export async function createStaffMember(
     return { error: firstError || 'Validation failed' }
   }
 
-  const { email, password, full_name_ar, full_name_en, phone, role } = validation.data
+  const { password, full_name_ar, full_name_en, phone, email: providedEmail, role } = validation.data
+
+  // Use provided email if given, otherwise derive from phone
+  const email = providedEmail?.trim() || `${phone.replace(/[^0-9]/g, '')}@staff.local`
 
   // Use admin client to create user in Supabase Auth
   const adminClient = createAdminClient()
@@ -72,7 +75,7 @@ export async function createStaffMember(
   const { data: newUser, error: authError } = await adminClient.auth.admin.createUser({
     email,
     password,
-    email_confirm: true, // Auto-confirm email
+    email_confirm: true,
   })
 
   if (authError) {

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { redirect } from 'next/navigation'
 import { getAuthenticatedUser } from '@/lib/actions/auth'
 import { getTranslations } from 'next-intl/server'

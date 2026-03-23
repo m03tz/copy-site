@@ -4,8 +4,9 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { createClient } from '@/lib/supabase/client'
-import { normalizePhone, isEmail } from '@/lib/utils/phone'
+import { normalizePhone } from '@/lib/utils/phone'
 import { getEmailByPhone } from '@/lib/actions/auth'
+import { staffLoginByPhone } from '@/lib/actions/staff-login'
 import { LanguageToggle } from '@/components/language-toggle'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -28,7 +29,7 @@ export default function LoginPage() {
   const [patientLoading, setPatientLoading] = useState(false)
 
   // Staff login state
-  const [identifier, setIdentifier] = useState('')
+  const [staffPhone, setStaffPhone] = useState('')
   const [password, setPassword] = useState('')
   const [staffError, setStaffError] = useState('')
   const [staffLoading, setStaffLoading] = useState(false)
@@ -90,63 +91,21 @@ export default function LoginPage() {
     }
   }
 
-  // ── Staff login (email/phone + password) ────────────────────────────────
+  // ── Staff login (phone + password) ──────────────────────────────────────
   const handleStaffLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setStaffError('')
     setStaffLoading(true)
 
     try {
-      const supabase = createClient()
-      const trimmed = identifier.trim()
-      const usingEmail = isEmail(trimmed)
+      const result = await staffLoginByPhone(staffPhone.trim(), password)
 
-      let email: string
-
-      if (usingEmail) {
-        email = trimmed
-      } else {
-        const normalizedPhone = normalizePhone(trimmed)
-        if (!normalizedPhone) {
-          setStaffError(t('invalidPhone'))
-          setStaffLoading(false)
-          return
-        }
-        const foundEmail = await getEmailByPhone(normalizedPhone)
-        if (!foundEmail) {
-          setStaffError(t('invalidCredentials'))
-          setStaffLoading(false)
-          return
-        }
-        email = foundEmail
-      }
-
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (signInError) {
-        setStaffError(t('invalidCredentials'))
-        setStaffLoading(false)
+      if ('error' in result) {
+        setStaffError(t(result.error))
         return
       }
 
-      if (data.user) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.user.id)
-          .single<{ role: string }>()
-
-        if (profileError || !profile) {
-          setStaffError(t('loginFailed'))
-          setStaffLoading(false)
-          return
-        }
-
-        router.push(`/${profile.role}/dashboard`)
-      }
+      router.push(`/${result.role}/dashboard`)
     } catch {
       setStaffError(t('loginFailed'))
     } finally {
@@ -231,14 +190,14 @@ export default function LoginPage() {
           {tab === 'staff' && (
             <form onSubmit={handleStaffLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="staff-identifier">{t('emailOrPhone')}</Label>
+                <Label htmlFor="staff-phone">{t('phoneNumber')}</Label>
                 <Input
-                  id="staff-identifier"
-                  type="text"
+                  id="staff-phone"
+                  type="tel"
                   dir="ltr"
-                  placeholder={t('emailOrPhonePlaceholder')}
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder={t('phonePlaceholder')}
+                  value={staffPhone}
+                  onChange={(e) => setStaffPhone(e.target.value)}
                   required
                   disabled={staffLoading}
                 />

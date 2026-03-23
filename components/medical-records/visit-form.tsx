@@ -76,6 +76,11 @@ export function VisitForm({
   function handleSubmit(formData: FormData) {
     setError(null)
 
+    if (!visitNote) {
+      setError(t('form.notesRequired'))
+      return
+    }
+
     // Inject appointment_id from controlled Select
     if (appointmentId && appointmentId !== 'none') {
       formData.set('appointment_id', appointmentId)
@@ -84,11 +89,7 @@ export function VisitForm({
     }
 
     // Inject notes (ANC/GYNE) from controlled Select
-    if (visitNote) {
-      formData.set('notes', visitNote)
-    } else {
-      formData.delete('notes')
-    }
+    formData.set('notes', visitNote)
 
     startTransition(async () => {
       let result: { success?: boolean; error?: string }
@@ -196,7 +197,7 @@ export function VisitForm({
 
       {/* Notes — visit type: ANC (red) or GYNE (green) */}
       <div className="space-y-1">
-        <Label htmlFor="notes">{t('form.notes')}</Label>
+        <Label htmlFor="notes">{t('form.notes')} <span className="text-destructive">*</span></Label>
         <Select value={visitNote} onValueChange={setVisitNote}>
           <SelectTrigger id="notes">
             <SelectValue placeholder={t('form.notes')} />

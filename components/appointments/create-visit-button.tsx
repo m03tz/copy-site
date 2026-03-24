@@ -64,8 +64,6 @@ export function CreateVisitButton({
           </DialogHeader>
           <VisitForm
             patientId={patientId}
-            appointments={[{ id: appointmentId, scheduled_start: scheduledStart, appointment_type: appointmentType }]}
-            defaultAppointmentId={appointmentId}
             onSuccess={handleSuccess}
             onCancel={() => setOpen(false)}
           />

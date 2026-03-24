@@ -80,36 +80,34 @@ export default async function MedicalRecordsPage() {
     ]),
   ]
 
-  // Fetch patient names + all patients for the add button
-  const { data: allPatientProfiles } = (await supabase
-    .from('profiles')
-    .select('id, full_name_ar, full_name_en, phone, patients!inner(id, national_id, patient_code)')
-    .eq('role', 'patient')) as unknown as {
-    data: { id: string; full_name_ar: string; full_name_en: string | null; phone: string | null; patients: { id: string; national_id: string | null; patient_code: string | null } | null }[] | null
+  // Query FROM patients (with profiles join) — same proven pattern as operations page
+  const { data: patientRows } = await supabase
+    .from('patients')
+    .select('id, national_id, patient_code, profiles!inner(full_name_ar, full_name_en, phone)') as unknown as {
+    data: { id: string; national_id: string | null; patient_code: string | null; profiles: { full_name_ar: string; full_name_en: string | null; phone: string | null } }[] | null
   }
 
-  let patientNames: Record<string, { full_name_ar: string; full_name_en: string | null }> = {}
-  if (allPatientIds.length > 0) {
-    const relevantProfiles = (allPatientProfiles ?? []).filter((p) => allPatientIds.includes(p.id))
-    if (relevantProfiles.length > 0) {
-      patientNames = relevantProfiles.reduce(
-        (acc, p) => {
-          acc[p.id] = { full_name_ar: p.full_name_ar, full_name_en: p.full_name_en }
-          return acc
-        },
-        {} as typeof patientNames
-      )
+  const allPatientProfiles = (patientRows ?? []).map((p) => {
+    const pr = p.profiles as { full_name_ar: string; full_name_en: string | null; phone: string | null }
+    return {
+      id: p.id,
+      full_name_ar: pr.full_name_ar,
+      full_name_en: pr.full_name_en,
+      phone: pr.phone,
+      national_id: p.national_id,
+      patient_code: p.patient_code,
     }
-    if (Object.keys(patientNames).length < allPatientIds.length) {
-      const missing = allPatientIds.filter((id) => !patientNames[id])
-      if (missing.length > 0) {
-        const { data: extraProfiles } = await supabase
-          .from('profiles')
-          .select('id, full_name_ar, full_name_en')
-          .in('id', missing)
+  })
 
-        for (const p of extraProfiles ?? []) {
-          patientNames[p.id] = { full_name_ar: p.full_name_ar, full_name_en: p.full_name_en }
+  let patientNames: Record<string, { full_name_ar: string; full_name_en: string | null; phone: string | null; patient_code: string | null }> = {}
+  if (allPatientIds.length > 0) {
+    for (const p of allPatientProfiles) {
+      if (allPatientIds.includes(p.id)) {
+        patientNames[p.id] = {
+          full_name_ar: p.full_name_ar,
+          full_name_en: p.full_name_en,
+          phone: p.phone,
+          patient_code: p.patient_code,
         }
       }
     }
@@ -127,6 +125,8 @@ export default async function MedicalRecordsPage() {
   type VisitData = RawVisitRow & {
     patient_name_ar: string
     patient_name_en: string | null
+    patient_phone: string | null
+    patient_code: string | null
     last_visit_date: string | null
   }
 
@@ -136,17 +136,19 @@ export default async function MedicalRecordsPage() {
       prescriptions: v.prescriptions ?? [],
       patient_name_ar: patientNames[v.patient_id]?.full_name_ar ?? '',
       patient_name_en: patientNames[v.patient_id]?.full_name_en ?? null,
+      patient_phone: patientNames[v.patient_id]?.phone ?? null,
+      patient_code: patientNames[v.patient_id]?.patient_code ?? null,
       last_visit_date: lastVisitDateByPatient[v.patient_id] ?? null,
     }))
   }
 
-  const patients = (allPatientProfiles ?? []).map((p) => ({
+  const patients = allPatientProfiles.map((p) => ({
     id: p.id,
     full_name_ar: p.full_name_ar,
     full_name_en: p.full_name_en,
-    phone: p.phone ?? null,
-    national_id: (p.patients as { national_id: string | null } | null)?.national_id ?? null,
-    patient_code: (p.patients as { patient_code: string | null } | null)?.patient_code ?? null,
+    phone: p.phone,
+    national_id: p.national_id,
+    patient_code: p.patient_code,
     last_visit_date: lastVisitDateByPatient[p.id] ?? null,
   }))
 

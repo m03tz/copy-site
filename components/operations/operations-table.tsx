@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { format } from 'date-fns'
@@ -52,6 +52,7 @@ import {
   CommandList,
 } from '@/components/ui/command'
 import { createOperation, updateOperation, deleteOperation, completeOperation, updateCompletedOperation, uncompleteOperation } from '@/lib/actions/operations'
+import { searchPatientsForCombobox } from '@/lib/actions/patients'
 import { createExternalCost, updateExternalCost, deleteExternalCost } from '@/lib/actions/external-costs'
 import type { ExternalCost } from '@/lib/actions/external-costs'
 import { getClinicHeaderHtml, getClinicHeaderStyles } from '@/lib/print-utils'
@@ -91,6 +92,15 @@ const EMPTY_FORM: FormState = {
 
 // ─── Searchable Patient Combobox ──────────────────────────────────────────────
 
+function normalizeArabicCombo(text: string): string {
+  return text
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .replace(/[\u064B-\u065F]/g, '')
+    .toLowerCase()
+}
+
 function PatientCombobox({
   patients,
   value,
@@ -104,14 +114,37 @@ function PatientCombobox({
 }) {
   const t = useTranslations('operations')
   const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const [searchResults, setSearchResults] = useState<Patient[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const selected = patients.find((p) => p.id === value)
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    const q = search.trim()
+    if (!q) {
+      setSearchResults([])
+      return
+    }
+    setIsSearching(true)
+    debounceRef.current = setTimeout(async () => {
+      const result = await searchPatientsForCombobox(q)
+      setSearchResults(result.patients ?? [])
+      setIsSearching(false)
+    }, 300)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [search])
+
+  const displayedPatients = search.trim() ? searchResults : patients
+
+  const allKnown = [...patients, ...searchResults]
+  const selected = allKnown.find((p) => p.id === value)
   const selectedLabel = selected
     ? `${selected.full_name_ar}${selected.patient_code ? ` (${selected.patient_code})` : ''}`
     : placeholder
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setSearch(''); setSearchResults([]) } }}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -124,17 +157,29 @@ function PatientCombobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" align="start">
-        <Command>
-          <CommandInput placeholder={t('searchPlaceholder')} />
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder={t('searchPlaceholder')}
+            value={search}
+            onValueChange={setSearch}
+          />
           <CommandList>
-            <CommandEmpty>{t('noResults')}</CommandEmpty>
+            {isSearching ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <CommandEmpty>{t('noResults')}</CommandEmpty>
+            )}
             <CommandGroup>
-              {patients.map((p) => (
+              {displayedPatients.map((p) => (
                 <CommandItem
                   key={p.id}
-                  value={`${p.full_name_ar} ${p.full_name_en ?? ''} ${p.patient_code ?? ''}`}
+                  value={p.id}
                   onSelect={() => {
                     onChange(p.id)
+                    setSearch('')
+                    setSearchResults([])
                     setOpen(false)
                   }}
                 >
@@ -616,14 +661,36 @@ export function OperationsTable({ operations, patients, externalCosts }: Operati
     router.refresh()
   }
 
-  // Filter operations by patient name or patient code
-  const q = searchQuery.trim().toLowerCase()
+  // Normalize Arabic: unify alef variants, remove diacritics, normalize ta-marbuta & alef-maqsura
+  function normalizeArabic(text: string): string {
+    return text
+      .replace(/[أإآٱ]/g, 'ا')
+      .replace(/ة/g, 'ه')
+      .replace(/ى/g, 'ي')
+      .replace(/[\u064B-\u065F]/g, '')
+      .toLowerCase()
+  }
+
+  function matchesPatient(nameAr: string, nameEn: string, code: string, phone: string, q: string): boolean {
+    const nq = normalizeArabic(q)
+    return (
+      normalizeArabic(nameAr).includes(nq) ||
+      normalizeArabic(nameEn).includes(nq) ||
+      normalizeArabic(code).includes(nq) ||
+      phone.includes(q)
+    )
+  }
+
+  // Filter operations — use patients array as fallback when op.patient join is missing
+  const q = searchQuery.trim()
   const filtered = q
     ? operations.filter((op) => {
-        const name = (op.patient?.full_name_ar ?? '').toLowerCase()
-        const nameEn = (op.patient?.full_name_en ?? '').toLowerCase()
-        const code = (op.patient?.patient_code ?? '').toLowerCase()
-        return name.includes(q) || nameEn.includes(q) || code.includes(q)
+        const fallback = patients.find((pt) => pt.id === op.patient_id)
+        const nameAr = op.patient?.full_name_ar ?? fallback?.full_name_ar ?? ''
+        const nameEn = op.patient?.full_name_en ?? fallback?.full_name_en ?? ''
+        const code = op.patient?.patient_code ?? fallback?.patient_code ?? ''
+        const phone = fallback?.phone ?? ''
+        return matchesPatient(nameAr, nameEn, code, phone, q)
       })
     : operations
 
@@ -631,7 +698,7 @@ export function OperationsTable({ operations, patients, externalCosts }: Operati
     ? externalCosts.filter((ec) => {
         const p = patients.find((pt) => pt.id === ec.patient_id)
         if (!p) return false
-        return p.full_name_ar.toLowerCase().includes(q) || (p.patient_code ?? '').toLowerCase().includes(q)
+        return matchesPatient(p.full_name_ar, p.full_name_en ?? '', p.patient_code ?? '', p.phone ?? '', q)
       })
     : externalCosts
 

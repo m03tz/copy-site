@@ -65,23 +65,32 @@ export default async function SecretaryMedicalRecordsPage() {
     ]),
   ]
 
-  const { data: allPatientProfiles } = (await supabase
-    .from('profiles')
-    .select('id, full_name_ar, full_name_en, phone, patients!inner(id, national_id, patient_code)')
-    .eq('role', 'patient')) as unknown as {
-    data: { id: string; full_name_ar: string; full_name_en: string | null; phone: string | null; patients: { id: string; national_id: string | null; patient_code: string | null } | null }[] | null
+  const { data: allPatientProfiles } = await supabase
+    .from('patients')
+    .select('id, national_id, patient_code, profiles!inner(full_name_ar, full_name_en, phone)') as unknown as {
+    data: { id: string; national_id: string | null; patient_code: string | null; profiles: { full_name_ar: string; full_name_en: string | null; phone: string | null } }[] | null
+  }
+
+  // Build lookup: patient id → profile + patient data
+  const patientProfileMap: Record<string, { full_name_ar: string; full_name_en: string | null; phone: string | null; national_id: string | null; patient_code: string | null }> = {}
+  for (const p of allPatientProfiles ?? []) {
+    const pr = p.profiles as { full_name_ar: string; full_name_en: string | null; phone: string | null }
+    patientProfileMap[p.id] = {
+      full_name_ar: pr.full_name_ar,
+      full_name_en: pr.full_name_en,
+      phone: pr.phone,
+      national_id: p.national_id,
+      patient_code: p.patient_code,
+    }
   }
 
   let patientNames: Record<string, { full_name_ar: string; full_name_en: string | null }> = {}
   if (allPatientIds.length > 0) {
-    const relevantProfiles = (allPatientProfiles ?? []).filter((p) => allPatientIds.includes(p.id))
-    patientNames = relevantProfiles.reduce(
-      (acc, p) => {
-        acc[p.id] = { full_name_ar: p.full_name_ar, full_name_en: p.full_name_en }
-        return acc
-      },
-      {} as typeof patientNames
-    )
+    for (const id of allPatientIds) {
+      if (patientProfileMap[id]) {
+        patientNames[id] = { full_name_ar: patientProfileMap[id].full_name_ar, full_name_en: patientProfileMap[id].full_name_en }
+      }
+    }
     const missing = allPatientIds.filter((id) => !patientNames[id])
     if (missing.length > 0) {
       const { data: extraProfiles } = await supabase
@@ -107,14 +116,17 @@ export default async function SecretaryMedicalRecordsPage() {
       patient_name_en: patientNames[v.patient_id]?.full_name_en ?? null,
     }))
 
-  const patients = (allPatientProfiles ?? []).map((p) => ({
-    id: p.id,
-    full_name_ar: p.full_name_ar,
-    full_name_en: p.full_name_en,
-    phone: p.phone ?? null,
-    national_id: (p.patients as { national_id: string | null } | null)?.national_id ?? null,
-    patient_code: (p.patients as { patient_code: string | null } | null)?.patient_code ?? null,
-  }))
+  const patients = (allPatientProfiles ?? []).map((p) => {
+    const pr = p.profiles as { full_name_ar: string; full_name_en: string | null; phone: string | null }
+    return {
+      id: p.id,
+      full_name_ar: pr.full_name_ar,
+      full_name_en: pr.full_name_en,
+      phone: pr.phone ?? null,
+      national_id: p.national_id,
+      patient_code: p.patient_code,
+    }
+  })
 
   return (
     <div className="space-y-6">

@@ -30,6 +30,8 @@ interface VisitData {
   }[]
   patient_name_ar: string
   patient_name_en: string | null
+  patient_phone?: string | null
+  patient_code?: string | null
   last_visit_date?: string | null
 }
 
@@ -62,16 +64,29 @@ export function MedicalRecordsTabs({ todayVisits, allVisits }: MedicalRecordsTab
     router.push(`/${locale}/${role}/patients/${patientId}`)
   }
 
+  // Normalize Arabic text: unify alef variants, remove diacritics, normalize ta-marbuta & alef-maqsura
+  function normalizeArabic(text: string): string {
+    return text
+      .replace(/[أإآٱ]/g, 'ا')
+      .replace(/ة/g, 'ه')
+      .replace(/ى/g, 'ي')
+      .replace(/[\u064B-\u065F]/g, '') // strip tashkeel
+      .toLowerCase()
+  }
+
   function matchesQuery(visit: VisitData, query: string): boolean {
     if (!query.trim()) return true
-    const q = query.toLowerCase()
-    return !!(
-      visit.patient_name_ar?.toLowerCase().includes(q) ||
-      visit.patient_name_en?.toLowerCase().includes(q) ||
-      visit.chief_complaint?.toLowerCase().includes(q) ||
-      visit.diagnosis?.toLowerCase().includes(q) ||
-      visit.notes?.toLowerCase().includes(q) ||
-      visit.visit_date.includes(q)
+    const q = normalizeArabic(query)
+    const check = (val?: string | null) => !!val && normalizeArabic(val).includes(q)
+    return (
+      check(visit.patient_name_ar) ||
+      check(visit.patient_name_en) ||
+      check(visit.patient_phone) ||
+      check(visit.patient_code) ||
+      check(visit.chief_complaint) ||
+      check(visit.diagnosis) ||
+      check(visit.notes) ||
+      visit.visit_date.includes(query.trim())
     )
   }
 

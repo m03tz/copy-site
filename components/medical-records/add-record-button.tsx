@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect, useRef } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -31,8 +31,9 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
-import { FilePlus, CheckCircle, ChevronsUpDown, Check } from 'lucide-react'
+import { FilePlus, CheckCircle, ChevronsUpDown, Check, Loader2 } from 'lucide-react'
 import { createVisitRecord } from '@/lib/actions/medical-records'
+import { searchPatientsForCombobox } from '@/lib/actions/patients'
 import { format } from 'date-fns'
 
 interface Patient {
@@ -61,6 +62,28 @@ export function AddRecordButton({ patients }: AddRecordButtonProps) {
   const [success, setSuccess] = useState(false)
   const [patientId, setPatientId] = useState<string>('')
   const [visitNote, setVisitNote] = useState<string>('')
+  const [patientSearch, setPatientSearch] = useState('')
+  const [searchResults, setSearchResults] = useState<Patient[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    const q = patientSearch.trim()
+    if (!q) {
+      setSearchResults([])
+      return
+    }
+    setIsSearching(true)
+    debounceRef.current = setTimeout(async () => {
+      const result = await searchPatientsForCombobox(q)
+      setSearchResults(result.patients ?? [])
+      setIsSearching(false)
+    }, 300)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [patientSearch])
+
+  const displayedPatients = patientSearch.trim() ? searchResults : patients
 
   const todayStr = format(new Date(), 'yyyy-MM-dd')
 
@@ -100,7 +123,7 @@ export function AddRecordButton({ patients }: AddRecordButtonProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setError(null); setSuccess(false); setPatientId(''); setVisitNote(''); setComboOpen(false) } }}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setError(null); setSuccess(false); setPatientId(''); setVisitNote(''); setPatientSearch(''); setSearchResults([]); setComboOpen(false) } }}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <FilePlus className="h-4 w-4 me-1" />
@@ -134,30 +157,35 @@ export function AddRecordButton({ patients }: AddRecordButtonProps) {
                   >
                     <span className="truncate">
                       {patientId
-                        ? (patients.find((p) => p.id === patientId)?.full_name_ar ?? tMedical('selectPatient'))
+                        ? ([...patients, ...searchResults].find((p) => p.id === patientId)?.full_name_ar ?? tMedical('selectPatient'))
                         : tMedical('selectPatient')}
                     </span>
                     <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-full p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder={locale === 'ar' ? 'بحث بالاسم...' : 'Search by name...'} />
+                  <Command shouldFilter={false}>
+                    <CommandInput
+                      placeholder={locale === 'ar' ? 'بحث بالاسم...' : 'Search by name...'}
+                      value={patientSearch}
+                      onValueChange={setPatientSearch}
+                    />
                     <CommandList>
-                      <CommandEmpty>{locale === 'ar' ? 'لا توجد نتائج' : 'No results found'}</CommandEmpty>
+                      {isSearching ? (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : (
+                        <CommandEmpty>{locale === 'ar' ? 'لا توجد نتائج' : 'No results found'}</CommandEmpty>
+                      )}
                       <CommandGroup>
-                        {patients.map((patient) => (
+                        {displayedPatients.map((patient) => (
                           <CommandItem
                             key={patient.id}
-                            value={[
-                              patient.full_name_ar,
-                              patient.full_name_en ?? '',
-                              patient.phone ?? '',
-                              patient.national_id ?? '',
-                              patient.patient_code ?? '',
-                            ].join(' ')}
+                            value={patient.id}
                             onSelect={() => {
                               setPatientId(patient.id)
+                              setPatientSearch('')
                               setComboOpen(false)
                             }}
                           >
@@ -181,7 +209,7 @@ export function AddRecordButton({ patients }: AddRecordButtonProps) {
 
             {/* Last visit date indicator */}
             {patientId && (() => {
-              const sel = patients.find((p) => p.id === patientId)
+              const sel = [...patients, ...searchResults].find((p) => p.id === patientId)
               return sel?.last_visit_date ? (
                 <p className="text-xs font-medium text-red-500">
                   {locale === 'ar' ? 'آخر زيارة:' : 'Last visit:'} {sel.last_visit_date}

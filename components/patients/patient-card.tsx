@@ -1,6 +1,7 @@
 import Link from 'next/link'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { NewVisitButton } from '@/components/patients/new-visit-button'
 
 interface PatientData {
   id: string
@@ -79,6 +80,9 @@ export function PatientCard({ patient, basePath, lastVisitDate, labels }: Patien
           )}
         </CardContent>
       </Link>
+      <CardFooter className="pt-0 pb-3 px-4">
+        <NewVisitButton patientId={patient.id} />
+      </CardFooter>
     </Card>
   )
 }

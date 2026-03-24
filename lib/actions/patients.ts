@@ -155,6 +155,75 @@ export async function searchPatients(
 }
 
 /**
+ * Search patients for use in combobox selectors.
+ * Searches across name (AR/EN), phone, patient_code, and national_id.
+ * Returns up to 30 matches.
+ */
+export async function searchPatientsForCombobox(query: string): Promise<{
+  patients?: Array<{
+    id: string
+    full_name_ar: string
+    full_name_en: string | null
+    phone: string | null
+    patient_code: string | null
+    national_id: string | null
+  }>
+  error?: string
+}> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Unauthorized' }
+
+  const q = query.trim()
+
+  // Search patient_code and national_id in patients table
+  const { data: codeMatches } = await supabase
+    .from('patients')
+    .select('id')
+    .or(`patient_code.ilike.%${q}%,national_id.ilike.%${q}%`) as { data: { id: string }[] | null }
+
+  const matchingIds = (codeMatches ?? []).map((p) => p.id)
+
+  let orCondition = `full_name_ar.ilike.%${q}%,full_name_en.ilike.%${q}%,phone.ilike.%${q}%`
+  if (matchingIds.length > 0) {
+    orCondition += `,id.in.(${matchingIds.join(',')})`
+  }
+
+  const { data: profiles, error } = await supabase
+    .from('profiles')
+    .select('id, full_name_ar, full_name_en, phone, patients!inner(patient_code, national_id)')
+    .eq('role', 'patient')
+    .or(orCondition)
+    .order('full_name_ar', { ascending: true })
+    .limit(30) as unknown as {
+      data: Array<{
+        id: string
+        full_name_ar: string
+        full_name_en: string | null
+        phone: string | null
+        patients: { patient_code: string | null; national_id: string | null } | { patient_code: string | null; national_id: string | null }[]
+      }> | null
+      error: { message: string } | null
+    }
+
+  if (error) return { error: error.message }
+
+  return {
+    patients: (profiles ?? []).map((p) => {
+      const pt = Array.isArray(p.patients) ? p.patients[0] : p.patients
+      return {
+        id: p.id,
+        full_name_ar: p.full_name_ar,
+        full_name_en: p.full_name_en,
+        phone: p.phone,
+        patient_code: pt?.patient_code ?? null,
+        national_id: pt?.national_id ?? null,
+      }
+    }),
+  }
+}
+
+/**
  * Update patient personal information across both profiles and patients tables.
  * Only doctor or secretary can edit patient personal information.
  */

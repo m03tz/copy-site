@@ -111,6 +111,22 @@ export default async function MedicalRecordsPage() {
         }
       }
     }
+    // Fallback: any patient_id not matched in the patients table → query profiles directly
+    const missing = allPatientIds.filter((id) => !patientNames[id])
+    if (missing.length > 0) {
+      const { data: extraProfiles } = await supabase
+        .from('profiles')
+        .select('id, full_name_ar, full_name_en, phone')
+        .in('id', missing)
+      for (const p of extraProfiles ?? []) {
+        patientNames[p.id] = {
+          full_name_ar: p.full_name_ar,
+          full_name_en: p.full_name_en,
+          phone: p.phone ?? null,
+          patient_code: null,
+        }
+      }
+    }
   }
 
   // Build last ended visit date per patient

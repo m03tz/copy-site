@@ -4,8 +4,7 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { createClient } from '@/lib/supabase/client'
-import { normalizePhone } from '@/lib/utils/phone'
-import { getEmailByPhone } from '@/lib/actions/auth'
+import { patientLoginByPhone } from '@/lib/actions/patient-login'
 import { staffLoginByPhone } from '@/lib/actions/staff-login'
 import { LanguageToggle } from '@/components/language-toggle'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -34,56 +33,32 @@ export default function LoginPage() {
   const [staffError, setStaffError] = useState('')
   const [staffLoading, setStaffLoading] = useState(false)
 
-  // ── Patient login (phone only) ──────────────────────────────────────────
+  // ── Patient login (phone only — passwordless) ───────────────────────────
   const handlePatientLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setPatientError('')
     setPatientLoading(true)
 
     try {
+      const result = await patientLoginByPhone(phone.trim())
+
+      if ('error' in result) {
+        setPatientError(t(result.error))
+        return
+      }
+
       const supabase = createClient()
-      const normalizedPhone = normalizePhone(phone.trim())
-
-      if (!normalizedPhone) {
-        setPatientError(t('invalidPhone'))
-        setPatientLoading(false)
-        return
-      }
-
-      const foundEmail = await getEmailByPhone(normalizedPhone)
-      if (!foundEmail) {
-        setPatientError(t('invalidCredentials'))
-        setPatientLoading(false)
-        return
-      }
-
-      // Default patient password = last 8 digits of phone
-      const defaultPassword = normalizedPhone.replace(/[^0-9]/g, '').slice(-8)
-
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: foundEmail,
-        password: defaultPassword,
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        token_hash: result.token_hash,
+        type: 'magiclink',
       })
 
-      if (signInError) {
-        setPatientError(t('invalidCredentials'))
-        setPatientLoading(false)
+      if (verifyError) {
+        setPatientError(t('loginFailed'))
         return
       }
 
-      if (data.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.user.id)
-          .single<{ role: string }>()
-
-        if (profile?.role === 'patient') {
-          router.push('/patient/dashboard')
-        } else {
-          setPatientError(t('invalidCredentials'))
-        }
-      }
+      router.push('/patient/dashboard')
     } catch {
       setPatientError(t('loginFailed'))
     } finally {

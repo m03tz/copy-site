@@ -84,7 +84,7 @@ export default async function SecretaryMedicalRecordsPage() {
     }
   }
 
-  let patientNames: Record<string, { full_name_ar: string; full_name_en: string | null }> = {}
+  const patientNames: Record<string, { full_name_ar: string; full_name_en: string | null }> = {}
   if (allPatientIds.length > 0) {
     for (const id of allPatientIds) {
       if (patientProfileMap[id]) {

@@ -99,7 +99,7 @@ export default async function MedicalRecordsPage() {
     }
   })
 
-  let patientNames: Record<string, { full_name_ar: string; full_name_en: string | null; phone: string | null; patient_code: string | null }> = {}
+  const patientNames: Record<string, { full_name_ar: string; full_name_en: string | null; phone: string | null; patient_code: string | null }> = {}
   if (allPatientIds.length > 0) {
     for (const p of allPatientProfiles) {
       if (allPatientIds.includes(p.id)) {

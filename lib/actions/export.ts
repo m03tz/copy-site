@@ -47,24 +47,34 @@ export async function getExportPatients(): Promise<{
     return { error: 'Unauthorized' }
   }
 
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('full_name_ar, full_name_en, phone, patients(date_of_birth, blood_type, national_id, patient_code)')
-    .eq('role', 'patient')
-    .order('full_name_ar') as {
-      data: {
-        full_name_ar: string
-        full_name_en: string | null
-        phone: string
-        patients: { date_of_birth: string; blood_type: string | null; national_id: string | null; patient_code: string | null } | null
-      }[] | null
-      error: unknown
-    }
+  type ProfileRow = {
+    full_name_ar: string
+    full_name_en: string | null
+    phone: string
+    patients: { date_of_birth: string; blood_type: string | null; national_id: string | null; patient_code: string | null } | null
+  }
 
-  if (error || !data) return { error: 'Failed to fetch patients' }
+  const allData: ProfileRow[] = []
+  const PAGE = 1000
+  let from = 0
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('full_name_ar, full_name_en, phone, patients(date_of_birth, blood_type, national_id, patient_code)')
+      .eq('role', 'patient')
+      .order('full_name_ar')
+      .range(from, from + PAGE - 1) as { data: ProfileRow[] | null; error: unknown }
+
+    if (error) return { error: 'Failed to fetch patients' }
+    if (!data || data.length === 0) break
+    allData.push(...data)
+    if (data.length < PAGE) break
+    from += PAGE
+  }
 
   return {
-    data: data.map((p) => {
+    data: allData.map((p) => {
       const patient = Array.isArray(p.patients) ? p.patients[0] : p.patients
       return {
         full_name_ar: p.full_name_ar,

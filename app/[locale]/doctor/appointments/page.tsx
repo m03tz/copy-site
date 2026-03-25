@@ -5,6 +5,21 @@ import { BookAppointmentButton } from '@/components/appointments/book-appointmen
 import { ExportAppointmentsButton } from '@/components/export/export-appointments-button'
 import { format } from 'date-fns'
 
+type RawAppointment = {
+  id: string
+  patient_id: string
+  scheduled_start: string
+  scheduled_end: string
+  status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled'
+  appointment_type: string
+  cancellation_reason: string | null
+  patients: {
+    patient_code: string | null
+    national_id: string | null
+    profiles: { full_name_ar: string; full_name_en: string | null } | null
+  } | null
+}
+
 export default async function DoctorAppointmentsPage() {
   const t = await getTranslations('appointments')
 
@@ -22,18 +37,11 @@ export default async function DoctorAppointmentsPage() {
         scheduled_end,
         status,
         appointment_type,
-        cancellation_reason
+        cancellation_reason,
+        patients(patient_code, national_id, profiles(full_name_ar, full_name_en))
       `)
       .order('scheduled_start', { ascending: false })) as unknown as Promise<{
-      data: {
-        id: string
-        patient_id: string
-        scheduled_start: string
-        scheduled_end: string
-        status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled'
-        appointment_type: string
-        cancellation_reason: string | null
-      }[] | null
+      data: RawAppointment[] | null
     }>,
     (supabase
       .from('profiles')
@@ -54,19 +62,6 @@ export default async function DoctorAppointmentsPage() {
   const patients = patientsResult.data ?? []
   const invoices = invoicesResult.data ?? []
 
-  // Build a lookup map for patient names + patient_code
-  const patientNameMap = new Map(
-    patients.map((p) => {
-      const patientsRecord = Array.isArray(p.patients) ? p.patients[0] : p.patients
-      return [p.id, {
-        full_name_ar: p.full_name_ar,
-        full_name_en: p.full_name_en,
-        patient_code: patientsRecord?.patient_code ?? null,
-        national_id: patientsRecord?.national_id ?? null,
-      }]
-    })
-  )
-
   // Build invoice fee map: patient_id + date -> amount_jod (take first/highest per day)
   const invoiceFees: Record<string, number> = {}
   for (const inv of invoices) {
@@ -78,10 +73,23 @@ export default async function DoctorAppointmentsPage() {
     }
   }
 
-  // Enrich appointments with patient names
+  // Reshape appointments — patient data is now embedded via FK join
   const appointments = rawAppointments.map((appt) => ({
-    ...appt,
-    patient: patientNameMap.get(appt.patient_id) ?? null,
+    id: appt.id,
+    patient_id: appt.patient_id,
+    scheduled_start: appt.scheduled_start,
+    scheduled_end: appt.scheduled_end,
+    status: appt.status,
+    appointment_type: appt.appointment_type,
+    cancellation_reason: appt.cancellation_reason,
+    patient: appt.patients
+      ? {
+          full_name_ar: appt.patients.profiles?.full_name_ar ?? '',
+          full_name_en: appt.patients.profiles?.full_name_en ?? null,
+          patient_code: appt.patients.patient_code ?? null,
+          national_id: appt.patients.national_id ?? null,
+        }
+      : null,
   }))
 
   return (

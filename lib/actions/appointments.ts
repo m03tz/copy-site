@@ -504,17 +504,27 @@ export async function getAppointments(filters: {
   // Resolve patient names via profiles lookup
   const rows = rawAppointments ?? []
   const patientIds = [...new Set(rows.map((a) => a.patient_id as string))]
-  let nameMap: Record<string, { full_name_ar: string; full_name_en: string | null }> = {}
+  let nameMap: Record<string, { full_name_ar: string; full_name_en: string | null; national_id: string | null; patient_code: string | null }> = {}
 
   if (patientIds.length > 0) {
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, full_name_ar, full_name_en')
-      .in('id', patientIds)
+    const [{ data: profiles }, { data: patientRecords }] = await Promise.all([
+      supabase.from('profiles').select('id, full_name_ar, full_name_en').in('id', patientIds),
+      supabase.from('patients').select('id, national_id, patient_code').in('id', patientIds),
+    ])
+
+    const patientMap = (patientRecords ?? []).reduce(
+      (acc, p) => { acc[p.id] = p; return acc },
+      {} as Record<string, { id: string; national_id: string | null; patient_code: string | null }>
+    )
 
     nameMap = (profiles ?? []).reduce(
       (acc, p) => {
-        acc[p.id] = { full_name_ar: p.full_name_ar, full_name_en: p.full_name_en }
+        acc[p.id] = {
+          full_name_ar: p.full_name_ar,
+          full_name_en: p.full_name_en,
+          national_id: patientMap[p.id]?.national_id ?? null,
+          patient_code: patientMap[p.id]?.patient_code ?? null,
+        }
         return acc
       },
       {} as typeof nameMap

@@ -9,6 +9,7 @@ export interface ExportPatient {
   date_of_birth: string
   blood_type: string
   national_id: string
+  patient_code: string
 }
 
 export interface ExportAppointment {
@@ -48,14 +49,14 @@ export async function getExportPatients(): Promise<{
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('full_name_ar, full_name_en, phone, patients(date_of_birth, blood_type, national_id)')
+    .select('full_name_ar, full_name_en, phone, patients(date_of_birth, blood_type, national_id, patient_code)')
     .eq('role', 'patient')
     .order('full_name_ar') as {
       data: {
         full_name_ar: string
         full_name_en: string | null
         phone: string
-        patients: { date_of_birth: string; blood_type: string | null; national_id: string | null } | null
+        patients: { date_of_birth: string; blood_type: string | null; national_id: string | null; patient_code: string | null } | null
       }[] | null
       error: unknown
     }
@@ -72,6 +73,7 @@ export async function getExportPatients(): Promise<{
         date_of_birth: patient?.date_of_birth ?? '',
         blood_type: patient?.blood_type ?? '',
         national_id: patient?.national_id ?? '',
+        patient_code: patient?.patient_code ?? '',
       }
     }),
   }

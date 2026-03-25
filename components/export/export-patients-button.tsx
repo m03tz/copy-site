@@ -19,12 +19,10 @@ export function ExportPatientsButton() {
       const XLSX = await import('xlsx')
 
       const headers = [
-        { key: 'full_name_ar', label: 'الاسم (عربي)' },
-        { key: 'full_name_en', label: 'الاسم (إنجليزي)' },
-        { key: 'phone', label: 'الهاتف' },
-        { key: 'date_of_birth', label: 'تاريخ الميلاد' },
-        { key: 'blood_type', label: 'فصيلة الدم' },
+        { key: 'full_name_ar', label: 'اسم المريض' },
+        { key: 'patient_code', label: 'رقم الملف' },
         { key: 'national_id', label: 'الرقم الوطني' },
+        { key: 'phone', label: 'رقم الهاتف' },
       ]
 
       const rows = result.data.map((item) => {

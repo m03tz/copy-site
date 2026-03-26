@@ -43,3 +43,11 @@ next-env.d.ts
 
 # vscode
 .vscode/
+
+# local dev scripts & logs
+import_patients.py
+import_filtered.py
+import_duplicates.py
+import_duplicates.log
+import_patients.log
+dev-server.log

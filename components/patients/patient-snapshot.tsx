@@ -38,6 +38,7 @@ interface Visit {
   vital_signs: Record<string, string> | null
   notes: string | null
   appointment_id: string | null
+  is_ended?: boolean
   prescriptions: {
     id: string
     medical_record_id: string
@@ -91,6 +92,8 @@ interface PatientSnapshotProps {
   patient: PatientData
   visits: Visit[]
   pregnancies: PregnancyData[]
+  /** Override computed lastVisitDate — pass from server when visits may be soft-deleted */
+  lastVisitDate?: string | null
 }
 
 function calculateAge(dateOfBirth: string): number | null {
@@ -111,7 +114,7 @@ function formatDate(dateStr: string): string {
   return date.toLocaleDateString('en-CA')
 }
 
-export function PatientSnapshot({ patient, visits, pregnancies }: PatientSnapshotProps) {
+export function PatientSnapshot({ patient, visits, pregnancies, lastVisitDate: lastVisitDateProp }: PatientSnapshotProps) {
   const t = useTranslations('patients.snapshot')
   const [editingHistory, setEditingHistory] = useState(false)
   const [editingObHistory, setEditingObHistory] = useState(false)
@@ -146,9 +149,14 @@ export function PatientSnapshot({ patient, visits, pregnancies }: PatientSnapsho
     : null
 
   const lastVisitDate = useMemo(() => {
-    if (visits.length === 0) return null
-    return visits[0].visit_date
-  }, [visits])
+    // Prefer the server-supplied prop (includes soft-deleted visits with fees)
+    if (lastVisitDateProp !== undefined) return lastVisitDateProp
+    // Fallback: find the most recent ended visit from the visits array
+    for (let i = visits.length - 1; i >= 0; i--) {
+      if (visits[i].is_ended) return visits[i].visit_date
+    }
+    return null
+  }, [visits, lastVisitDateProp])
 
 
   function handleSaveObHistory() {

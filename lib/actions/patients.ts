@@ -134,7 +134,7 @@ export async function searchPatients(
       .select('patient_id, visit_date')
       .in('patient_id', patientIds)
       .eq('is_ended', true)
-      .is('deleted_at', null)
+      .or('deleted_at.is.null,visit_fee.not.is.null')
       .order('visit_date', { ascending: false }) as {
         data: { patient_id: string; visit_date: string }[] | null
       }
@@ -167,6 +167,7 @@ export async function searchPatientsForCombobox(query: string): Promise<{
     phone: string | null
     patient_code: string | null
     national_id: string | null
+    last_visit_date?: string | null
   }>
   error?: string
 }> {
@@ -208,18 +209,41 @@ export async function searchPatientsForCombobox(query: string): Promise<{
 
   if (error) return { error: error.message }
 
-  return {
-    patients: (profiles ?? []).map((p) => {
-      const pt = Array.isArray(p.patients) ? p.patients[0] : p.patients
-      return {
-        id: p.id,
-        full_name_ar: p.full_name_ar,
-        full_name_en: p.full_name_en,
-        phone: p.phone,
-        patient_code: pt?.patient_code ?? null,
-        national_id: pt?.national_id ?? null,
+  const profileList = (profiles ?? []).map((p) => {
+    const pt = Array.isArray(p.patients) ? p.patients[0] : p.patients
+    return {
+      id: p.id,
+      full_name_ar: p.full_name_ar,
+      full_name_en: p.full_name_en,
+      phone: p.phone,
+      patient_code: pt?.patient_code ?? null,
+      national_id: pt?.national_id ?? null,
+    }
+  })
+
+  // Fetch last ended visit date (including soft-deleted with fees)
+  const profileIds = profileList.map((p) => p.id)
+  const lastVisitMap: Record<string, string> = {}
+  if (profileIds.length > 0) {
+    const { data: lastVisits } = await supabase
+      .from('medical_records')
+      .select('patient_id, visit_date')
+      .in('patient_id', profileIds)
+      .eq('is_ended', true)
+      .or('deleted_at.is.null,visit_fee.not.is.null')
+      .order('visit_date', { ascending: false }) as {
+        data: { patient_id: string; visit_date: string }[] | null
       }
-    }),
+    for (const v of lastVisits ?? []) {
+      if (!lastVisitMap[v.patient_id]) lastVisitMap[v.patient_id] = v.visit_date
+    }
+  }
+
+  return {
+    patients: profileList.map((p) => ({
+      ...p,
+      last_visit_date: lastVisitMap[p.id] ?? null,
+    })),
   }
 }
 

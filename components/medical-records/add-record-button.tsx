@@ -65,6 +65,7 @@ export function AddRecordButton({ patients }: AddRecordButtonProps) {
   const [patientSearch, setPatientSearch] = useState('')
   const [searchResults, setSearchResults] = useState<Patient[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -83,7 +84,8 @@ export function AddRecordButton({ patients }: AddRecordButtonProps) {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   }, [patientSearch])
 
-  const displayedPatients = patientSearch.trim() ? searchResults : patients
+  // Only show results when actively searching — prevents rendering 6000+ items at once
+  const displayedPatients = patientSearch.trim() ? searchResults : []
 
   const todayStr = format(new Date(), 'yyyy-MM-dd')
 
@@ -123,7 +125,7 @@ export function AddRecordButton({ patients }: AddRecordButtonProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setError(null); setSuccess(false); setPatientId(''); setVisitNote(''); setPatientSearch(''); setSearchResults([]); setComboOpen(false) } }}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setError(null); setSuccess(false); setPatientId(''); setVisitNote(''); setPatientSearch(''); setSearchResults([]); setComboOpen(false); setSelectedPatient(null) } }}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <FilePlus className="h-4 w-4 me-1" />
@@ -157,7 +159,7 @@ export function AddRecordButton({ patients }: AddRecordButtonProps) {
                   >
                     <span className="truncate">
                       {patientId
-                        ? ([...patients, ...searchResults].find((p) => p.id === patientId)?.full_name_ar ?? tMedical('selectPatient'))
+                        ? (selectedPatient?.full_name_ar ?? tMedical('selectPatient'))
                         : tMedical('selectPatient')}
                     </span>
                     <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
@@ -175,8 +177,12 @@ export function AddRecordButton({ patients }: AddRecordButtonProps) {
                         <div className="flex items-center justify-center py-4">
                           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                         </div>
-                      ) : (
+                      ) : patientSearch.trim() ? (
                         <CommandEmpty>{locale === 'ar' ? 'لا توجد نتائج' : 'No results found'}</CommandEmpty>
+                      ) : (
+                        <div className="py-4 text-center text-sm text-muted-foreground">
+                          {locale === 'ar' ? 'ابحث عن المريضة...' : 'Type to search patients...'}
+                        </div>
                       )}
                       <CommandGroup>
                         {displayedPatients.map((patient) => (
@@ -185,6 +191,7 @@ export function AddRecordButton({ patients }: AddRecordButtonProps) {
                             value={patient.id}
                             onSelect={() => {
                               setPatientId(patient.id)
+                              setSelectedPatient(patient)
                               setPatientSearch('')
                               setComboOpen(false)
                             }}
@@ -208,14 +215,11 @@ export function AddRecordButton({ patients }: AddRecordButtonProps) {
             </div>
 
             {/* Last visit date indicator */}
-            {patientId && (() => {
-              const sel = [...patients, ...searchResults].find((p) => p.id === patientId)
-              return sel?.last_visit_date ? (
-                <p className="text-xs font-medium text-red-500">
-                  {locale === 'ar' ? 'آخر زيارة:' : 'Last visit:'} {sel.last_visit_date}
-                </p>
-              ) : null
-            })()}
+            {patientId && selectedPatient?.last_visit_date && (
+              <p className="text-xs font-medium text-red-500">
+                {locale === 'ar' ? 'آخر زيارة:' : 'Last visit:'} {selectedPatient.last_visit_date}
+              </p>
+            )}
 
             {/* Visit Date */}
             <div className="space-y-1">

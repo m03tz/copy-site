@@ -15,9 +15,10 @@ import { VisitForm } from '@/components/medical-records/visit-form'
 
 interface NewVisitButtonProps {
   patientId: string
+  lastVisitDate?: string | null
 }
 
-export function NewVisitButton({ patientId }: NewVisitButtonProps) {
+export function NewVisitButton({ patientId, lastVisitDate }: NewVisitButtonProps) {
   const t = useTranslations('visits')
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -47,6 +48,7 @@ export function NewVisitButton({ patientId }: NewVisitButtonProps) {
           </DialogHeader>
           <VisitForm
             patientId={patientId}
+            lastVisitDate={lastVisitDate}
             onSuccess={() => {
               setOpen(false)
               router.refresh()

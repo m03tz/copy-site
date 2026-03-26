@@ -81,7 +81,7 @@ export function PatientCard({ patient, basePath, lastVisitDate, labels }: Patien
         </CardContent>
       </Link>
       <CardFooter className="pt-0 pb-3 px-4">
-        <NewVisitButton patientId={patient.id} />
+        <NewVisitButton patientId={patient.id} lastVisitDate={lastVisitDate} />
       </CardFooter>
     </Card>
   )

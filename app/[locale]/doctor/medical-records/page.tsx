@@ -130,10 +130,21 @@ export default async function MedicalRecordsPage() {
   }
 
   // Build last ended visit date per patient
+  // Include soft-deleted visits that still have a fee (ended visits > 24h old)
+  const allProfileIds = allPatientProfiles.map((p) => p.id)
   const lastVisitDateByPatient: Record<string, string> = {}
-  for (const v of allVisits ?? []) {
-    if (!lastVisitDateByPatient[v.patient_id]) {
-      lastVisitDateByPatient[v.patient_id] = v.visit_date
+  if (allProfileIds.length > 0) {
+    const { data: lastVisitRows } = await supabase
+      .from('medical_records')
+      .select('patient_id, visit_date')
+      .in('patient_id', allProfileIds)
+      .eq('is_ended', true)
+      .or('deleted_at.is.null,visit_fee.not.is.null')
+      .order('visit_date', { ascending: false }) as {
+        data: { patient_id: string; visit_date: string }[] | null
+      }
+    for (const v of lastVisitRows ?? []) {
+      if (!lastVisitDateByPatient[v.patient_id]) lastVisitDateByPatient[v.patient_id] = v.visit_date
     }
   }
 

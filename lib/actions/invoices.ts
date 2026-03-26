@@ -215,13 +215,12 @@ export async function getVisitorsSummary(): Promise<{
   if (!user) return { error: 'Unauthorized' }
 
   const now = new Date()
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
-  const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).toISOString()
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-  const yearStart = new Date(now.getFullYear(), 0, 1).toISOString()
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+  const yearStart = `${now.getFullYear()}-01-01`
 
   const [todayRes, monthRes, yearRes] = await Promise.all([
-    supabase.from('medical_records').select('id', { count: 'exact', head: true }).eq('is_ended', true).or('deleted_at.is.null,visit_fee.not.is.null').gte('visit_date', todayStart).lte('visit_date', todayEnd) as unknown as Promise<{ count: number | null }>,
+    supabase.from('medical_records').select('id', { count: 'exact', head: true }).eq('is_ended', true).or('deleted_at.is.null,visit_fee.not.is.null').eq('visit_date', todayStr) as unknown as Promise<{ count: number | null }>,
     supabase.from('medical_records').select('id', { count: 'exact', head: true }).eq('is_ended', true).or('deleted_at.is.null,visit_fee.not.is.null').gte('visit_date', monthStart) as unknown as Promise<{ count: number | null }>,
     supabase.from('medical_records').select('id', { count: 'exact', head: true }).eq('is_ended', true).or('deleted_at.is.null,visit_fee.not.is.null').gte('visit_date', yearStart) as unknown as Promise<{ count: number | null }>,
   ])

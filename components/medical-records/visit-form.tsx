@@ -37,6 +37,7 @@ interface VisitFormProps {
     notes: string | null
     appointment_id?: string | null
   }
+  lastVisitDate?: string | null
   onSuccess?: () => void
   onCancel?: () => void
 }
@@ -44,6 +45,7 @@ interface VisitFormProps {
 export function VisitForm({
   patientId,
   existingRecord,
+  lastVisitDate,
   onSuccess,
   onCancel,
 }: VisitFormProps) {
@@ -90,6 +92,13 @@ export function VisitForm({
 
   return (
     <form action={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pe-2">
+      {/* Last Visit */}
+      {!isEditMode && lastVisitDate && (
+        <p className="text-xs font-medium text-red-500">
+          {t('lastVisit')}: {lastVisitDate}
+        </p>
+      )}
+
       {/* Visit Date */}
       <div className="space-y-1">
         <Label htmlFor="visit_date">{t('form.visitDate')}</Label>

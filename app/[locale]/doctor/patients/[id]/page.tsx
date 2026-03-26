@@ -140,6 +140,18 @@ export default async function DoctorPatientProfilePage({ params }: DoctorPatient
   const files = patientFiles ?? []
   const infertilityRecords = infertilityData ?? []
 
+  // Fetch last ended visit date — includes soft-deleted visits that still have a fee
+  const { data: lastVisitRow } = await supabase
+    .from('medical_records')
+    .select('visit_date')
+    .eq('patient_id', id)
+    .eq('is_ended', true)
+    .or('deleted_at.is.null,visit_fee.not.is.null')
+    .order('visit_date', { ascending: false })
+    .limit(1)
+    .single() as { data: { visit_date: string } | null }
+  const lastVisitDate = lastVisitRow?.visit_date ?? null
+
   // Extract latest vital signs to pre-fill pregnancy measurement form
   const latestVitals = visits[0]?.vital_signs
     ? (visits[0].vital_signs as { blood_pressure?: string; weight?: string })
@@ -192,7 +204,7 @@ export default async function DoctorPatientProfilePage({ params }: DoctorPatient
       )}
 
       {/* ── Patient Snapshot ── */}
-      <PatientSnapshot patient={patient} visits={visits} pregnancies={pregnancies} />
+      <PatientSnapshot patient={patient} visits={visits} pregnancies={pregnancies} lastVisitDate={lastVisitDate} />
 
       {/* ── Current Medications ── */}
       <div className="space-y-2">

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { createClient } from '@/lib/supabase/client'
-import { patientLoginByPhone } from '@/lib/actions/patient-login'
+import { patientLoginByFileNo } from '@/lib/actions/patient-login'
 import { staffLoginByPhone } from '@/lib/actions/staff-login'
 import { LanguageToggle } from '@/components/language-toggle'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -23,7 +23,7 @@ export default function LoginPage() {
   const [tab, setTab] = useState<Tab>('patient')
 
   // Patient login state
-  const [phone, setPhone] = useState('')
+  const [fileNo, setFileNo] = useState('')
   const [patientError, setPatientError] = useState('')
   const [patientLoading, setPatientLoading] = useState(false)
 
@@ -40,7 +40,7 @@ export default function LoginPage() {
     setPatientLoading(true)
 
     try {
-      const result = await patientLoginByPhone(phone.trim())
+      const result = await patientLoginByFileNo(fileNo.trim())
 
       if ('error' in result) {
         setPatientError(t(result.error))
@@ -129,14 +129,14 @@ export default function LoginPage() {
           {tab === 'patient' && (
             <form onSubmit={handlePatientLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="patient-phone">{t('phoneNumber')}</Label>
+                <Label htmlFor="patient-file-no">{t('fileNumber')}</Label>
                 <Input
-                  id="patient-phone"
-                  type="tel"
+                  id="patient-file-no"
+                  type="text"
                   dir="ltr"
-                  placeholder={t('phonePlaceholder')}
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder={t('fileNumberPlaceholder')}
+                  value={fileNo}
+                  onChange={(e) => setFileNo(e.target.value)}
                   required
                   disabled={patientLoading}
                 />

@@ -152,7 +152,7 @@ export async function createPatient(
   const adminClient = createAdminClient()
 
   // Generate a unique identifier for auth email if no email or phone provided
-  const authEmail = email || (phone ? `${phone.replace(/[^0-9]/g, '')}@patient.local` : `patient_${crypto.randomUUID().slice(0, 8)}@patient.local`)
+  const authEmail = email || `patient_${crypto.randomUUID()}@patient.local`
   const authPassword = password || crypto.randomUUID().slice(0, 12)
 
   const { data: newUser, error: authError } = await adminClient.auth.admin.createUser({

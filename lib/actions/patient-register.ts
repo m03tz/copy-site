@@ -38,22 +38,10 @@ export async function registerPatient(
 
   const admin = createAdminClient()
 
-  // Check if phone already exists
-  const { data: existing } = await admin
-    .from('profiles')
-    .select('id')
-    .eq('phone', normalizedPhone)
-    .limit(1)
-    .single()
-
-  if (existing) {
-    return { error: 'رقم الهاتف مسجل مسبقاً' }
-  }
-
-  // Generate auth email from phone
-  const authEmail = `${normalizedPhone.replace(/[^0-9]/g, '')}@patient.local`
-  // Use phone digits as password (last 8 digits)
-  const authPassword = normalizedPhone.replace(/[^0-9]/g, '').slice(-8)
+  // Generate unique auth email using a random UUID (allows duplicate phone numbers)
+  const { randomUUID } = await import('crypto')
+  const authEmail = `${randomUUID()}@patient.local`
+  const authPassword = randomUUID().replace(/-/g, '').slice(0, 16)
 
   const { data: newUser, error: authError } = await admin.auth.admin.createUser({
     email: authEmail,

@@ -20,6 +20,7 @@ export interface Operation {
     full_name_ar: string
     full_name_en: string | null
     patient_code: string | null
+    phone: string | null
   } | null
 }
 
@@ -41,7 +42,7 @@ export async function getOperations(): Promise<{ data?: Operation[]; error?: str
       completed_date,
       completion_amount,
       patients!inner (
-        profiles!inner ( full_name_ar, full_name_en ),
+        profiles!inner ( full_name_ar, full_name_en, phone ),
         patient_code
       )
     `)
@@ -51,7 +52,7 @@ export async function getOperations(): Promise<{ data?: Operation[]; error?: str
   if (error) return { error: error.message }
 
   const operations = (data ?? []).map((row: Record<string, unknown>) => {
-    const pat = row.patients as { profiles: { full_name_ar: string; full_name_en: string | null }; patient_code: string | null } | null
+    const pat = row.patients as { profiles: { full_name_ar: string; full_name_en: string | null; phone: string | null }; patient_code: string | null } | null
     return {
       id: row.id as string,
       patient_id: row.patient_id as string,
@@ -69,6 +70,7 @@ export async function getOperations(): Promise<{ data?: Operation[]; error?: str
             full_name_ar: pat.profiles.full_name_ar,
             full_name_en: pat.profiles.full_name_en,
             patient_code: pat.patient_code,
+            phone: pat.profiles.phone,
           }
         : null,
     }

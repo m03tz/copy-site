@@ -685,11 +685,10 @@ export function OperationsTable({ operations, patients, externalCosts }: Operati
   const q = searchQuery.trim()
   const filtered = q
     ? operations.filter((op) => {
-        const fallback = patients.find((pt) => pt.id === op.patient_id)
-        const nameAr = op.patient?.full_name_ar ?? fallback?.full_name_ar ?? ''
-        const nameEn = op.patient?.full_name_en ?? fallback?.full_name_en ?? ''
-        const code = op.patient?.patient_code ?? fallback?.patient_code ?? ''
-        const phone = fallback?.phone ?? ''
+        const nameAr = op.patient?.full_name_ar ?? ''
+        const nameEn = op.patient?.full_name_en ?? ''
+        const code = op.patient?.patient_code ?? ''
+        const phone = op.patient?.phone ?? ''
         return matchesPatient(nameAr, nameEn, code, phone, q)
       })
     : operations
@@ -836,12 +835,11 @@ export function OperationsTable({ operations, patients, externalCosts }: Operati
                 </TableRow>
               ) : (
                 pendingOps.map((op) => {
-                  const patient = patients.find((p) => p.id === op.patient_id)
                   return (
                   <TableRow key={op.id}>
-                    <TableCell className="font-medium">{getPatientName(op.patient_id)}</TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">{patient?.patient_code ?? '—'}</TableCell>
-                    <TableCell className="text-xs dir-ltr">{patient?.phone ?? '—'}</TableCell>
+                    <TableCell className="font-medium">{getOpPatientName(op)}</TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">{op.patient?.patient_code ?? '—'}</TableCell>
+                    <TableCell className="text-xs dir-ltr">{op.patient?.phone ?? '—'}</TableCell>
                     <TableCell dir="ltr" className="text-start">
                       {format(new Date(op.operation_date), 'dd-MM-yyyy')}
                     </TableCell>

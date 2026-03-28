@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
-import { useRouter } from '@/i18n/routing'
+import { useRouter, usePathname } from '@/i18n/routing'
+import { useTheme } from 'next-themes'
 import { createClient } from '@/lib/supabase/client'
 import { patientLoginByFileNo } from '@/lib/actions/patient-login'
 import { staffLoginByPhone } from '@/lib/actions/staff-login'
@@ -17,6 +18,13 @@ export default function LoginPage() {
   const locale = useLocale()
   const isRtl = locale === 'ar'
   const router = useRouter()
+  const pathname = usePathname()
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
+
+  const isDark = mounted && theme === 'dark'
 
   const [tab, setTab] = useState<Tab>('patient')
 
@@ -31,6 +39,11 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false)
   const [staffError, setStaffError] = useState('')
   const [staffLoading, setStaffLoading] = useState(false)
+
+  const toggleLocale = () => {
+    const nextLocale = locale === 'ar' ? 'en' : 'ar'
+    router.replace(pathname, { locale: nextLocale })
+  }
 
   const handlePatientLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -61,10 +74,40 @@ export default function LoginPage() {
     finally { setStaffLoading(false) }
   }
 
+  // ── Theme-aware color tokens ──────────────────────────────────────────────
+  const panelBg       = isDark ? '#0f172a'              : '#fff'
+  const heading       = isDark ? '#f1f5f9'              : '#0f172a'
+  const subtext       = isDark ? '#94a3b8'              : '#64748b'
+  const labelColor    = isDark ? '#94a3b8'              : '#334155'
+  const inputBg       = isDark ? '#1e293b'              : '#fff'
+  const inputBorder   = isDark ? '#334155'              : '#e2e8f0'
+  const inputText     = isDark ? '#f1f5f9'              : '#0f172a'
+  const tabsBg        = isDark ? '#1e293b'              : '#f1f5f9'
+  const activeTabBg   = isDark ? '#334155'              : '#fff'
+  const mobileText    = isDark ? '#93c5fd'              : '#1e3a8a'
+  const iconBtnBg     = isDark ? 'rgba(255,255,255,.08)': 'rgba(0,0,0,.06)'
+  const iconBtnColor  = isDark ? '#94a3b8'              : '#475569'
+  const iconBtnBorder = isDark ? 'rgba(255,255,255,.12)': 'rgba(0,0,0,.1)'
+
+  const inputStyle = {
+    width: '100%', padding: '12px 14px',
+    borderRadius: 10, border: `1.5px solid ${inputBorder}`,
+    fontSize: 14, fontWeight: 500, color: inputText,
+    background: inputBg, outline: 'none',
+    transition: 'border-color .2s', boxSizing: 'border-box' as const,
+  }
+
+  const iconBtnStyle = {
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    width: 36, height: 36, borderRadius: 10, border: `1px solid ${iconBtnBorder}`,
+    background: iconBtnBg, color: iconBtnColor, cursor: 'pointer',
+    fontSize: 12, fontWeight: 700, transition: 'all .2s',
+  }
+
   return (
     <div
       dir={isRtl ? 'rtl' : 'ltr'}
-      style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', background: '#f8fafc', overflow: 'hidden' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', overflow: 'hidden' }}
     >
       {/* ── LEFT PANEL ─────────────────────────────────────────── */}
       <div
@@ -175,13 +218,57 @@ export default function LoginPage() {
       <div style={{
         flex: 1, display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        padding: '40px 24px', background: '#fff',
+        padding: '40px 24px', background: panelBg,
+        position: 'relative', transition: 'background .3s',
       }}>
+
+        {/* ── Top-right toggle buttons ── */}
+        <div style={{
+          position: 'absolute',
+          top: 16,
+          ...(isRtl ? { left: 16 } : { right: 16 }),
+          display: 'flex', gap: 8, zIndex: 10,
+        }}>
+          {/* Language toggle */}
+          <button
+            type="button"
+            onClick={toggleLocale}
+            style={iconBtnStyle}
+            title={isRtl ? 'Switch to English' : 'التبديل إلى العربية'}
+          >
+            {isRtl ? 'EN' : 'عر'}
+          </button>
+
+          {/* Dark mode toggle */}
+          <button
+            type="button"
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            style={iconBtnStyle}
+            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {isDark ? (
+              /* Sun icon */
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="5"/>
+                <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+              </svg>
+            ) : (
+              /* Moon icon */
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+              </svg>
+            )}
+          </button>
+        </div>
+
         {/* Mobile: logo */}
         <div className="lg:hidden" style={{ marginBottom: 28, textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 6 }}>
             <Image src="/images/site logo.png" alt="Logo" width={40} height={40} style={{ objectFit: 'contain' }} />
-            <span style={{ fontSize: 17, fontWeight: 800, color: '#1e3a8a' }}>
+            <span style={{ fontSize: 17, fontWeight: 800, color: mobileText }}>
               {isRtl ? 'عيادة د. فادي الصالح' : 'Dr. Fadi Al-Sahleh Clinic'}
             </span>
           </div>
@@ -191,17 +278,17 @@ export default function LoginPage() {
         <div style={{ width: '100%', maxWidth: 420 }}>
           {/* Header */}
           <div style={{ marginBottom: 32 }}>
-            <h1 style={{ fontSize: 26, fontWeight: 900, color: '#0f172a', letterSpacing: '-.02em', marginBottom: 6 }}>
+            <h1 style={{ fontSize: 26, fontWeight: 900, color: heading, letterSpacing: '-.02em', marginBottom: 6 }}>
               {isRtl ? 'مرحباً بك 👋' : 'Welcome back 👋'}
             </h1>
-            <p style={{ fontSize: 14, color: '#64748b', fontWeight: 500 }}>
+            <p style={{ fontSize: 14, color: subtext, fontWeight: 500 }}>
               {isRtl ? 'سجّل دخولك للوصول إلى ملفك الطبي وحجز مواعيدك' : 'Sign in to access your medical records and appointments'}
             </p>
           </div>
 
           {/* Tabs */}
           <div style={{
-            display: 'flex', background: '#f1f5f9',
+            display: 'flex', background: tabsBg,
             borderRadius: 12, padding: 4, marginBottom: 28,
           }}>
             {(['patient', 'staff'] as Tab[]).map((t_) => (
@@ -213,8 +300,8 @@ export default function LoginPage() {
                   flex: 1, padding: '9px 0', borderRadius: 9, border: 'none', cursor: 'pointer',
                   fontSize: 13, fontWeight: 700,
                   transition: 'all .2s',
-                  background: tab === t_ ? '#fff' : 'transparent',
-                  color: tab === t_ ? '#1e40af' : '#64748b',
+                  background: tab === t_ ? activeTabBg : 'transparent',
+                  color: tab === t_ ? '#1e40af' : subtext,
                   boxShadow: tab === t_ ? '0 1px 6px rgba(0,0,0,.1)' : 'none',
                 }}
               >
@@ -229,7 +316,7 @@ export default function LoginPage() {
           {tab === 'patient' && (
             <form onSubmit={handlePatientLogin} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 7 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: labelColor, marginBottom: 7 }}>
                   {isRtl ? 'رقم الملف' : t('fileNumber')}
                 </label>
                 <input
@@ -240,16 +327,9 @@ export default function LoginPage() {
                   onChange={(e) => setFileNo(e.target.value)}
                   required
                   disabled={patientLoading}
-                  style={{
-                    width: '100%', padding: '12px 14px',
-                    borderRadius: 10, border: '1.5px solid #e2e8f0',
-                    fontSize: 14, fontWeight: 500, color: '#0f172a',
-                    background: '#fff', outline: 'none',
-                    transition: 'border-color .2s',
-                    boxSizing: 'border-box',
-                  }}
+                  style={inputStyle}
                   onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                  onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                  onBlur={(e) => e.target.style.borderColor = inputBorder}
                 />
               </div>
 
@@ -291,7 +371,7 @@ export default function LoginPage() {
                 )}
               </button>
 
-              <p style={{ textAlign: 'center', fontSize: 13, color: '#64748b', fontWeight: 500 }}>
+              <p style={{ textAlign: 'center', fontSize: 13, color: subtext, fontWeight: 500 }}>
                 {isRtl ? 'ليس لديك حساب؟ ' : t('noAccount') + ' '}
                 <Link href="/register" style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'none' }}>
                   {isRtl ? 'إنشاء حساب' : t('createAccount')}
@@ -304,7 +384,7 @@ export default function LoginPage() {
           {tab === 'staff' && (
             <form onSubmit={handleStaffLogin} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 7 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: labelColor, marginBottom: 7 }}>
                   {isRtl ? 'رقم الهاتف' : t('phoneNumber')}
                 </label>
                 <input
@@ -315,20 +395,14 @@ export default function LoginPage() {
                   onChange={(e) => setStaffPhone(e.target.value)}
                   required
                   disabled={staffLoading}
-                  style={{
-                    width: '100%', padding: '12px 14px',
-                    borderRadius: 10, border: '1.5px solid #e2e8f0',
-                    fontSize: 14, fontWeight: 500, color: '#0f172a',
-                    background: '#fff', outline: 'none',
-                    transition: 'border-color .2s', boxSizing: 'border-box',
-                  }}
+                  style={inputStyle}
                   onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                  onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                  onBlur={(e) => e.target.style.borderColor = inputBorder}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 7 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: labelColor, marginBottom: 7 }}>
                   {isRtl ? 'كلمة المرور' : t('password')}
                 </label>
                 <div style={{ position: 'relative' }}>
@@ -340,15 +414,9 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={staffLoading}
-                    style={{
-                      width: '100%', padding: '12px 42px 12px 14px',
-                      borderRadius: 10, border: '1.5px solid #e2e8f0',
-                      fontSize: 14, fontWeight: 500, color: '#0f172a',
-                      background: '#fff', outline: 'none',
-                      transition: 'border-color .2s', boxSizing: 'border-box',
-                    }}
+                    style={{ ...inputStyle, padding: '12px 42px 12px 14px' }}
                     onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                    onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                    onBlur={(e) => e.target.style.borderColor = inputBorder}
                   />
                   <button
                     type="button"
@@ -415,7 +483,7 @@ export default function LoginPage() {
 
           {/* Back to home */}
           <div style={{ marginTop: 28, textAlign: 'center' }}>
-            <Link href="/" style={{ fontSize: 13, color: '#94a3b8', fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <Link href="/" style={{ fontSize: 13, color: subtext, fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
               ← {isRtl ? 'العودة إلى الصفحة الرئيسية' : 'Back to home'}
             </Link>
           </div>

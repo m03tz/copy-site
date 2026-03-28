@@ -236,7 +236,7 @@ export default function LoginPage() {
             style={iconBtnStyle}
             title={isRtl ? 'Switch to English' : 'التبديل إلى العربية'}
           >
-            {isRtl ? 'EN' : 'عر'}
+            {isRtl ? 'EN' : 'عربي'}
           </button>
 
           {/* Dark mode toggle */}

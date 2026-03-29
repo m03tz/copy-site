@@ -131,7 +131,8 @@ export default async function MedicalRecordsPage() {
   const allProfileIds = allPatientProfiles.map((p) => p.id)
   const lastVisitDateByPatient: Record<string, string> = {}
   if (allProfileIds.length > 0) {
-    const { data: lastVisitRows } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: lastVisitRows } = await (supabase as any)
       .from('medical_records')
       .select('patient_id, visit_date')
       .in('patient_id', allProfileIds)

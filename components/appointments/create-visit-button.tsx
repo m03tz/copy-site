@@ -24,8 +24,10 @@ interface CreateVisitButtonProps {
 export function CreateVisitButton({
   appointmentId,
   patientId,
-  scheduledStart,
-  appointmentType,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  scheduledStart: _scheduledStart,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  appointmentType: _appointmentType,
 }: CreateVisitButtonProps) {
   const t = useTranslations('visits')
   const [open, setOpen] = useState(false)

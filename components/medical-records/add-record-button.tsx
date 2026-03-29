@@ -50,7 +50,8 @@ interface AddRecordButtonProps {
   patients: Patient[]
 }
 
-export function AddRecordButton({ patients }: AddRecordButtonProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function AddRecordButton({ patients: _patients }: AddRecordButtonProps) {
   const t = useTranslations('visits')
   const tMedical = useTranslations('medicalRecords')
   const locale = useLocale()

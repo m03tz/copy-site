@@ -103,6 +103,7 @@ export async function deleteStaffMember(
     'infertility_records',
   ]
   for (const table of tablesWithNotNullDoctorId) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: reassignErr } = await (adminClient as any)
       .from(table)
       .update({ doctor_id: user.id })
@@ -121,6 +122,7 @@ export async function deleteStaffMember(
     { table: 'operations', column: 'doctor_id' },
   ]
   for (const step of nullableSteps) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: nullErr } = await (adminClient as any)
       .from(step.table)
       .update({ [step.column]: null })

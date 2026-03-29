@@ -92,6 +92,7 @@ const EMPTY_FORM: FormState = {
 
 // ─── Searchable Patient Combobox ──────────────────────────────────────────────
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function normalizeArabicCombo(text: string): string {
   return text
     .replace(/[أإآٱ]/g, 'ا')

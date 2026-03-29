@@ -36,27 +36,24 @@ export default async function SecretaryMedicalRecordsPage() {
   today.setHours(0, 0, 0, 0)
   const todayStr = format(today, 'yyyy-MM-dd')
 
-  const { data: todayVisits } = (await supabase
-    .from('medical_records')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mrTable = (supabase as any).from('medical_records')
+
+  const { data: todayVisits } = (await mrTable
     .select('id, patient_id, visit_date, chief_complaint, diagnosis, treatment_plan, vital_signs, notes, appointment_id, created_at, is_ended, visit_fee, prescriptions(*)')
     .eq('visit_date', todayStr)
     .eq('medication_only', false)
     .eq('is_ended', false)
     .is('deleted_at', null)
-    .order('created_at', { ascending: true })) as unknown as {
-    data: RawVisitRow[] | null
-  }
+    .order('created_at', { ascending: true })) as { data: RawVisitRow[] | null }
 
-  const { data: allVisits } = (await supabase
-    .from('medical_records')
+  const { data: allVisits } = (await mrTable
     .select('id, patient_id, visit_date, chief_complaint, diagnosis, treatment_plan, vital_signs, notes, appointment_id, created_at, is_ended, visit_fee, prescriptions(*)')
     .eq('medication_only', false)
     .eq('is_ended', true)
     .is('deleted_at', null)
     .order('ended_at', { ascending: false })
-    .order('created_at', { ascending: false })) as unknown as {
-    data: RawVisitRow[] | null
-  }
+    .order('created_at', { ascending: false })) as { data: RawVisitRow[] | null }
 
   const allPatientIds = [
     ...new Set([

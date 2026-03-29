@@ -141,7 +141,8 @@ export default async function DoctorPatientProfilePage({ params }: DoctorPatient
   const infertilityRecords = infertilityData ?? []
 
   // Fetch last ended visit date — includes soft-deleted visits that still have a fee
-  const { data: lastVisitRow } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: lastVisitRow } = await (supabase as any)
     .from('medical_records')
     .select('visit_date')
     .eq('patient_id', id)

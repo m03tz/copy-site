@@ -37,8 +37,8 @@ export default async function MedicalRecordsPage() {
   today.setHours(0, 0, 0, 0)
   const todayStr = format(today, 'yyyy-MM-dd')
 
-  // Cleanup: soft-delete ended visits older than 24 hours (preserves financial data)
-  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  // Cleanup: soft-delete ended visits from before today (i.e., ended before midnight)
+  const cutoff = today.toISOString()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase as any)
     .from('medical_records')

@@ -705,6 +705,16 @@ export function OperationsTable({ operations, patients, externalCosts }: Operati
   const completedOps = filtered.filter((op) => op.is_completed)
   const completedCount = completedOps.length + filteredExtCosts.length
 
+  type CompletedItem = { kind: 'operation'; data: Operation } | { kind: 'external'; data: ExternalCost }
+  const sortedCompletedItems: CompletedItem[] = [
+    ...completedOps.map((op): CompletedItem => ({ kind: 'operation', data: op })),
+    ...filteredExtCosts.map((ec): CompletedItem => ({ kind: 'external', data: ec })),
+  ].sort((a, b) => {
+    const dateA = a.kind === 'operation' ? a.data.operation_date : a.data.cost_date
+    const dateB = b.kind === 'operation' ? b.data.operation_date : b.data.cost_date
+    return dateA.localeCompare(dateB)
+  })
+
   return (
     <div className="space-y-4">
       {/* Top bar: search + buttons */}
@@ -950,37 +960,36 @@ export function OperationsTable({ operations, patients, externalCosts }: Operati
                 </TableRow>
               ) : (
                 <>
-                  {/* Completed operations */}
-                  {completedOps.map((op) => (
-                    <TableRow key={`op-${op.id}`}>
-                      <TableCell className="font-medium">{getOpPatientName(op)}</TableCell>
+                  {sortedCompletedItems.map((item) => item.kind === 'operation' ? (
+                    <TableRow key={`op-${item.data.id}`}>
+                      <TableCell className="font-medium">{getOpPatientName(item.data)}</TableCell>
                       <TableCell dir="ltr" className="text-start">
-                        {format(new Date(op.operation_date), 'dd-MM-yyyy')}
+                        {format(new Date(item.data.operation_date), 'dd-MM-yyyy')}
                       </TableCell>
                       <TableCell dir="ltr" className="text-start">
-                        {op.completed_date ? format(new Date(op.completed_date), 'dd-MM-yyyy') : '—'}
+                        {item.data.completed_date ? format(new Date(item.data.completed_date), 'dd-MM-yyyy') : '—'}
                       </TableCell>
-                      <TableCell>{op.hospital_name}</TableCell>
-                      <TableCell>{op.operation_type}</TableCell>
+                      <TableCell>{item.data.hospital_name}</TableCell>
+                      <TableCell>{item.data.operation_type}</TableCell>
                       <TableCell>
                         <span className="inline-block rounded-full bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 dark:bg-green-900/30 dark:text-green-400">
                           {t('operationBadge')}
                         </span>
                       </TableCell>
                       <TableCell>
-                        {editingAmountId === op.id && editAmountKind === 'operation' ? (
+                        {editingAmountId === item.data.id && editAmountKind === 'operation' ? (
                           <div className="flex items-center gap-1">
                             <Input type="number" min="0" step="0.5" value={editAmountValue} onChange={(e) => setEditAmountValue(e.target.value)} className="h-7 w-20 text-xs" dir="ltr" autoFocus />
-                            <button onClick={() => handleSaveAmount(op.id, 'operation')} disabled={savingAmountId === op.id} className="text-green-600 hover:text-green-700 disabled:opacity-50">
-                              {savingAmountId === op.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                            <button onClick={() => handleSaveAmount(item.data.id, 'operation')} disabled={savingAmountId === item.data.id} className="text-green-600 hover:text-green-700 disabled:opacity-50">
+                              {savingAmountId === item.data.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                             </button>
                             <button onClick={() => { setEditingAmountId(null); setEditAmountValue('') }} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
                           </div>
                         ) : (
                           <div className="flex items-center gap-1 group">
-                            <span className="font-semibold">{op.completion_amount?.toFixed(2) ?? '—'}</span>
+                            <span className="font-semibold">{item.data.completion_amount?.toFixed(2) ?? '—'}</span>
                             <span className="text-xs text-muted-foreground">د.أ</span>
-                            <button onClick={() => { setEditingAmountId(op.id); setEditAmountKind('operation'); setEditAmountValue((op.completion_amount ?? 0).toString()) }} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground">
+                            <button onClick={() => { setEditingAmountId(item.data.id); setEditAmountKind('operation'); setEditAmountValue((item.data.completion_amount ?? 0).toString()) }} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground">
                               <Pencil className="h-3.5 w-3.5" />
                             </button>
                           </div>
@@ -988,36 +997,33 @@ export function OperationsTable({ operations, patients, externalCosts }: Operati
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => handlePrint(op)} title="طباعة"><Printer className="h-3.5 w-3.5" /></Button>
-                          {uncompleteConfirmId === op.id ? (
+                          <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => handlePrint(item.data)} title="طباعة"><Printer className="h-3.5 w-3.5" /></Button>
+                          {uncompleteConfirmId === item.data.id ? (
                             <>
-                              <Button variant="ghost" size="sm" className="h-7 px-2 text-amber-600 hover:text-amber-700" onClick={() => handleUncomplete(op.id)} disabled={uncomletingId === op.id}>
-                                {uncomletingId === op.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                              <Button variant="ghost" size="sm" className="h-7 px-2 text-amber-600 hover:text-amber-700" onClick={() => handleUncomplete(item.data.id)} disabled={uncomletingId === item.data.id}>
+                                {uncomletingId === item.data.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                               </Button>
                               <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setUncompleteConfirmId(null)}><X className="h-3.5 w-3.5" /></Button>
                             </>
                           ) : (
-                            <Button variant="ghost" size="sm" className="h-7 px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20" onClick={() => setUncompleteConfirmId(op.id)} title={t('uncompleteOperation')}>
+                            <Button variant="ghost" size="sm" className="h-7 px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20" onClick={() => setUncompleteConfirmId(item.data.id)} title={t('uncompleteOperation')}>
                               <Undo2 className="h-3.5 w-3.5" />
                             </Button>
                           )}
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
-
-                  {/* External costs */}
-                  {filteredExtCosts.map((ec) => (
-                    <TableRow key={`ext-${ec.id}`}>
-                      <TableCell className="font-medium">{getPatientName(ec.patient_id)}</TableCell>
+                  ) : (
+                    <TableRow key={`ext-${item.data.id}`}>
+                      <TableCell className="font-medium">{getPatientName(item.data.patient_id)}</TableCell>
                       <TableCell dir="ltr" className="text-start">
-                        {format(new Date(ec.cost_date), 'dd-MM-yyyy')}
+                        {format(new Date(item.data.cost_date), 'dd-MM-yyyy')}
                       </TableCell>
                       <TableCell className="text-muted-foreground">—</TableCell>
                       <TableCell className="text-muted-foreground">—</TableCell>
                       <TableCell>
                         <span className="inline-block rounded-full bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-0.5 dark:bg-blue-900/30 dark:text-blue-400">
-                          {ec.visit_type}
+                          {item.data.visit_type}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -1026,19 +1032,19 @@ export function OperationsTable({ operations, patients, externalCosts }: Operati
                         </span>
                       </TableCell>
                       <TableCell>
-                        {editingAmountId === ec.id && editAmountKind === 'external' ? (
+                        {editingAmountId === item.data.id && editAmountKind === 'external' ? (
                           <div className="flex items-center gap-1">
                             <Input type="number" min="0" step="0.5" value={editAmountValue} onChange={(e) => setEditAmountValue(e.target.value)} className="h-7 w-20 text-xs" dir="ltr" autoFocus />
-                            <button onClick={() => handleSaveAmount(ec.id, 'external')} disabled={savingAmountId === ec.id} className="text-green-600 hover:text-green-700 disabled:opacity-50">
-                              {savingAmountId === ec.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                            <button onClick={() => handleSaveAmount(item.data.id, 'external')} disabled={savingAmountId === item.data.id} className="text-green-600 hover:text-green-700 disabled:opacity-50">
+                              {savingAmountId === item.data.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                             </button>
                             <button onClick={() => { setEditingAmountId(null); setEditAmountValue('') }} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
                           </div>
                         ) : (
                           <div className="flex items-center gap-1 group">
-                            <span className="font-semibold">{ec.amount.toFixed(2)}</span>
+                            <span className="font-semibold">{item.data.amount.toFixed(2)}</span>
                             <span className="text-xs text-muted-foreground">د.أ</span>
-                            <button onClick={() => { setEditingAmountId(ec.id); setEditAmountKind('external'); setEditAmountValue(ec.amount.toString()) }} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground">
+                            <button onClick={() => { setEditingAmountId(item.data.id); setEditAmountKind('external'); setEditAmountValue(item.data.amount.toString()) }} className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground">
                               <Pencil className="h-3.5 w-3.5" />
                             </button>
                           </div>
@@ -1046,15 +1052,15 @@ export function OperationsTable({ operations, patients, externalCosts }: Operati
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          {extDeleteConfirmId === ec.id ? (
+                          {extDeleteConfirmId === item.data.id ? (
                             <>
-                              <Button variant="ghost" size="sm" className="h-7 px-2 text-destructive hover:text-destructive" onClick={() => handleDeleteExtCost(ec.id)} disabled={extDeletingId === ec.id}>
-                                {extDeletingId === ec.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                              <Button variant="ghost" size="sm" className="h-7 px-2 text-destructive hover:text-destructive" onClick={() => handleDeleteExtCost(item.data.id)} disabled={extDeletingId === item.data.id}>
+                                {extDeletingId === item.data.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                               </Button>
                               <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setExtDeleteConfirmId(null)}><X className="h-3.5 w-3.5" /></Button>
                             </>
                           ) : (
-                            <Button variant="ghost" size="sm" className="h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setExtDeleteConfirmId(ec.id)} title={t('deleteOperation')}>
+                            <Button variant="ghost" size="sm" className="h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setExtDeleteConfirmId(item.data.id)} title={t('deleteOperation')}>
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           )}

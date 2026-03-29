@@ -47,7 +47,7 @@ export async function getOperations(): Promise<{ data?: Operation[]; error?: str
       )
     `)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .order('operation_date', { ascending: false }) as any)
+    .order('operation_date', { ascending: true }) as any)
 
   if (error) return { error: error.message }
 

@@ -6,6 +6,7 @@ import { Link } from '@/i18n/routing'
 import { LanguageToggle } from '@/components/language-toggle'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Menu, X } from 'lucide-react'
+import Image from 'next/image'
 
 export function PublicNavigation() {
   const t = useTranslations('landing')
@@ -18,9 +19,18 @@ export function PublicNavigation() {
           {/* Clinic name / logo */}
           <Link
             href="/"
-            className="text-medical-blue-700 font-bold text-lg hover:text-medical-blue-600 transition-colors"
+            className="flex items-center gap-2 hover:opacity-90 transition-opacity"
           >
-            {t('clinicName')}
+            <Image
+              src="/images/site logo.png"
+              alt="Clinic Logo"
+              width={40}
+              height={40}
+              className="object-contain"
+            />
+            <span className="text-medical-blue-700 font-bold text-lg">
+              {t('clinicName')}
+            </span>
           </Link>
 
           {/* Desktop navigation */}

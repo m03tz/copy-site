@@ -130,7 +130,7 @@ export default function HomePage() {
                 </div>
               </div>
               {/* Clinic logo */}
-              <Image src="/images/site logo.png" alt={t('clinicName')} width={100} height={100} className="object-contain" priority
+              <Image src="/images/site logo.png" alt={t('clinicName')} width={220} height={220} className="object-contain" priority
                 style={{ filter: 'drop-shadow(0 8px 24px rgba(255,255,255,.2))' }} />
             </div>
 

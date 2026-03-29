@@ -24,7 +24,7 @@ export function Hero() {
               priority
             />
           </div>
-          <div className="relative w-36 h-36 sm:w-44 sm:h-44">
+          <div className="relative w-64 h-64 sm:w-72 sm:h-72">
             <Image
               src="/images/site logo.png"
               alt={t('clinicName')}

@@ -129,7 +129,8 @@ export async function searchPatients(
   const patientIds = (patients ?? []).map((p) => p.id as string)
   const lastVisitMap: Record<string, string> = {}
   if (patientIds.length > 0) {
-    const { data: lastVisits } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: lastVisits } = await (supabase as any)
       .from('medical_records')
       .select('patient_id, visit_date')
       .in('patient_id', patientIds)
@@ -225,7 +226,8 @@ export async function searchPatientsForCombobox(query: string): Promise<{
   const profileIds = profileList.map((p) => p.id)
   const lastVisitMap: Record<string, string> = {}
   if (profileIds.length > 0) {
-    const { data: lastVisits } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: lastVisits } = await (supabase as any)
       .from('medical_records')
       .select('patient_id, visit_date')
       .in('patient_id', profileIds)

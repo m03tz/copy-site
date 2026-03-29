@@ -219,10 +219,12 @@ export async function getVisitorsSummary(): Promise<{
   const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
   const yearStart = `${now.getFullYear()}-01-01`
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mr = (supabase as any).from('medical_records')
   const [todayRes, monthRes, yearRes] = await Promise.all([
-    supabase.from('medical_records').select('id', { count: 'exact', head: true }).eq('is_ended', true).or('deleted_at.is.null,visit_fee.not.is.null').eq('visit_date', todayStr) as unknown as Promise<{ count: number | null }>,
-    supabase.from('medical_records').select('id', { count: 'exact', head: true }).eq('is_ended', true).or('deleted_at.is.null,visit_fee.not.is.null').gte('visit_date', monthStart) as unknown as Promise<{ count: number | null }>,
-    supabase.from('medical_records').select('id', { count: 'exact', head: true }).eq('is_ended', true).or('deleted_at.is.null,visit_fee.not.is.null').gte('visit_date', yearStart) as unknown as Promise<{ count: number | null }>,
+    mr.select('id', { count: 'exact', head: true }).eq('is_ended', true).or('deleted_at.is.null,visit_fee.not.is.null').eq('visit_date', todayStr) as Promise<{ count: number | null }>,
+    mr.select('id', { count: 'exact', head: true }).eq('is_ended', true).or('deleted_at.is.null,visit_fee.not.is.null').gte('visit_date', monthStart) as Promise<{ count: number | null }>,
+    mr.select('id', { count: 'exact', head: true }).eq('is_ended', true).or('deleted_at.is.null,visit_fee.not.is.null').gte('visit_date', yearStart) as Promise<{ count: number | null }>,
   ])
 
   return {

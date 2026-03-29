@@ -51,7 +51,7 @@ export default async function MedicalRecordsPage() {
   // Fetch today's ACTIVE (non-ended) visits — oldest first for queue ordering
   const { data: todayVisits } = (await supabase
     .from('medical_records')
-    .select('id, patient_id, visit_date, chief_complaint, diagnosis, treatment_plan, vital_signs, notes, appointment_id, created_at, is_ended, visit_fee, prescriptions(*)')
+    .select('id, patient_id, visit_date, chief_complaint, diagnosis, treatment_plan, vital_signs, notes, appointment_id, created_at, is_ended, visit_fee, medication_only, prescriptions(*)')
     .eq('visit_date', todayStr)
     .eq('medication_only', false)
     .eq('is_ended', false)
@@ -63,7 +63,7 @@ export default async function MedicalRecordsPage() {
   // Fetch all ended visits — most recently ended first (exclude soft-deleted)
   const { data: allVisits } = (await supabase
     .from('medical_records')
-    .select('id, patient_id, visit_date, chief_complaint, diagnosis, treatment_plan, vital_signs, notes, appointment_id, created_at, is_ended, visit_fee, prescriptions(*)')
+    .select('id, patient_id, visit_date, chief_complaint, diagnosis, treatment_plan, vital_signs, notes, appointment_id, created_at, is_ended, visit_fee, medication_only, prescriptions(*)')
     .eq('medication_only', false)
     .eq('is_ended', true)
     .is('deleted_at', null)

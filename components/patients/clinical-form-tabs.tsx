@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { FlaskConical, Baby, Pill, FolderOpen, TestTube, CalendarPlus, DoorOpen, FileText } from 'lucide-react'
+import { FlaskConical, Baby, Pill, FolderOpen, TestTube, CalendarPlus, DoorOpen, FileText, Microscope } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -32,6 +32,7 @@ import { FileUpload } from '@/components/files/file-upload'
 import { FileList } from '@/components/files/file-list'
 import { TestRequestForm } from '@/components/lab-tests/test-request-form'
 import { MedicalReportForm } from '@/components/medical-report/medical-report-form'
+import { InvestigateForm } from '@/components/investigate/investigate-form'
 import { BookingForm } from '@/components/appointments/booking-form'
 import type { InfertilityRecord, Pregnancy, PregnancyMeasurement } from '@/lib/types/database'
 
@@ -41,7 +42,7 @@ type PregnancyWithMeasurements = Pregnancy & {
   pregnancy_measurements: PregnancyMeasurement[]
 }
 
-type FormMode = 'infertility' | 'anc' | 'prescriptions' | 'medicalReport' | 'files' | 'testRequest' | 'booking'
+type FormMode = 'infertility' | 'anc' | 'prescriptions' | 'medicalReport' | 'investigate' | 'files' | 'testRequest' | 'booking'
 
 interface LatestVitals {
   blood_pressure?: string
@@ -157,6 +158,7 @@ export function ClinicalFormTabs({
           <ModeButton label={t('ancSection')} icon={<Baby className="h-4 w-4" />} active={mode === 'anc'} onClick={() => setMode('anc')} />
           <ModeButton label={t('tabPrescriptions')} icon={<Pill className="h-4 w-4" />} active={mode === 'prescriptions'} onClick={() => setMode('prescriptions')} />
           <ModeButton label={t('tabMedicalReport')} icon={<FileText className="h-4 w-4" />} active={mode === 'medicalReport'} onClick={() => setMode('medicalReport')} />
+          <ModeButton label={t('tabInvestigate')} icon={<Microscope className="h-4 w-4" />} active={mode === 'investigate'} onClick={() => setMode('investigate')} />
           <ModeButton label={t('tabFiles')} icon={<FolderOpen className="h-4 w-4" />} active={mode === 'files'} onClick={() => setMode('files')} />
           <ModeButton label={t('tabLabTests')} icon={<TestTube className="h-4 w-4" />} active={mode === 'testRequest'} onClick={() => setMode('testRequest')} />
           <ModeButton label={t('tabBooking')} icon={<CalendarPlus className="h-4 w-4" />} active={mode === 'booking'} onClick={() => setMode('booking')} />
@@ -269,6 +271,10 @@ export function ClinicalFormTabs({
           gravida={gravida}
           para={para}
         />
+      )}
+
+      {mode === 'investigate' && (
+        <InvestigateForm patientName={patientName} />
       )}
 
       {mode === 'files' && (

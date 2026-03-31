@@ -33,8 +33,8 @@ SELECT cron.schedule(
   '0 5 * * *',
   $$
   SELECT net.http_post(
-    url     := 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/daily-reminders',
-    headers := '{"Content-Type": "application/json", "Authorization": "Bearer YOUR_ANON_KEY"}'::jsonb,
+    url     := 'https://mkgosgskgmkpflgzeoxl.supabase.co/functions/v1/daily-reminders',
+    headers := '{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rZ29zZ3NrZ21rcGZsZ3plb3hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTUzMDIsImV4cCI6MjA4NjIzMTMwMn0.2hrLF4MyGLXUMdByMl6uptoSSSWKIHhEyr4GLuwYEQ8"}'::jsonb,
     body    := '{}'::jsonb
   ) AS request_id;
   $$

@@ -35,18 +35,16 @@ function buildSameDayReminder(params: {
   const { patientName, appointmentTime, appointmentType } = params
   const typeAr = APPOINTMENT_TYPE_AR[appointmentType] ?? 'زيارة'
 
-  return `🏥 *عيادة د. فادي نادي السحلة*
+  return `🏥 *عيادة د. فادي السحلة*
 أخصائي نساء وتوليد وعقم وجراحة بالمنظار
 
 مرحباً ${patientName}،
 نذكّركِ بموعدكِ *اليوم* 📅
 
 📋 *تفاصيل الموعد:*
-• الوقت: ${appointmentTime}
-• نوع الزيارة: ${typeAr}
 • العنوان: جرش - الأردن
 
-نتطلع لرؤيتكِ. إذا كنتِ بحاجة للإلغاء أو التغيير، يرجى التواصل معنا.
+ إذا كنتِ بحاجة للإلغاء أو التغيير، يرجى التواصل معنا.
 
 📞 هاتف العيادة: +962786637847`
 }

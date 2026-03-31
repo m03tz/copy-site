@@ -296,9 +296,7 @@ export function AppointmentCalendar({ appointments, doctorId }: AppointmentCalen
                 const start = new Date(appt.scheduled_start)
                 const end = new Date(appt.scheduled_end)
                 const timeStr = `${start.toLocaleTimeString(isAr ? 'ar-JO' : 'en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} - ${end.toLocaleTimeString(isAr ? 'ar-JO' : 'en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`
-                const patientName = isAr
-                  ? appt.patient?.full_name_ar
-                  : (appt.patient?.full_name_en ?? appt.patient?.full_name_ar)
+                const patientName = appt.patient?.full_name_ar
 
                 const canCancel = appt.status !== 'cancelled' && appt.status !== 'completed'
 

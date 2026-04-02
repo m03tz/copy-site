@@ -20,8 +20,8 @@ export function getClinicHeaderStyles(): string {
   .clinic-header { text-align: center; margin-bottom: 28px; }
   .clinic-logo { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 10px; }
   .clinic-name { color: #1a1a1a; font-size: 22px; font-weight: bold; margin: 0 0 5px; }
-  .clinic-specialty { color: #444; font-size: 13px; margin: 0 0 4px; }
-  .clinic-contact { color: #666; font-size: 12px; margin: 0 0 14px; }
+  .clinic-specialty { color: #444; font-size: 18px; margin: 0 0 4px; }
+  .clinic-contact { color: #666; font-size: 18px; margin: 0 0 14px; }
   .clinic-divider-thick { border-top: 3px solid #0d7377; }
   .clinic-divider-thin { border-top: 1px solid #0d9ea4; margin-top: 3px; }`
 }

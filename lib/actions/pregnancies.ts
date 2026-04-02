@@ -38,7 +38,7 @@ const createPregnancySchema = z.object({
 const updatePregnancySchema = z.object({
   pregnancy_id: z.string().uuid(),
   lmp_date: z.string().min(1, 'LMP date is required'),
-  baby_gender: z.enum(['male', 'female']).optional(),
+  baby_gender: z.string().optional(),
   notes: z.string().optional(),
 })
 
@@ -53,11 +53,11 @@ const updateMeasurementSchema = z.object({
   gestational_week: z.coerce.number().int().min(1).max(42).optional(),
   weight_kg: z.coerce.number().positive().optional(),
   blood_pressure: z.string().optional(),
-  crl: z.coerce.number().positive().optional(),
-  bpd: z.coerce.number().positive().optional(),
-  fl:  z.coerce.number().positive().optional(),
-  ac:  z.coerce.number().positive().optional(),
-  efw: z.coerce.number().positive().optional(),
+  crl: z.string().optional(),
+  bpd: z.string().optional(),
+  fl:  z.string().optional(),
+  ac:  z.string().optional(),
+  efw: z.string().optional(),
   hb:           z.coerce.number().positive().optional(),
   rbs:          z.coerce.number().positive().optional(),
   tsh_lab:      z.coerce.number().positive().optional(),
@@ -82,12 +82,12 @@ const addMeasurementSchema = z.object({
   weight_kg: z.coerce.number().positive().optional(),
   blood_pressure: z.string().optional(),
   fetal_heartbeat: z.coerce.number().int().min(60).max(200).optional(),
-  // ANC ultrasound fields
-  crl: z.coerce.number().positive().optional(),
-  bpd: z.coerce.number().positive().optional(),
-  fl:  z.coerce.number().positive().optional(),
-  ac:  z.coerce.number().positive().optional(),
-  efw: z.coerce.number().positive().optional(),
+  // ANC ultrasound fields — stored as free text
+  crl: z.string().optional(),
+  bpd: z.string().optional(),
+  fl:  z.string().optional(),
+  ac:  z.string().optional(),
+  efw: z.string().optional(),
   // ANC lab fields
   hb:           z.coerce.number().positive().optional(),
   rbs:          z.coerce.number().positive().optional(),

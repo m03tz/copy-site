@@ -66,13 +66,13 @@ export function TestRequestForm({ patientName }: TestRequestFormProps) {
   <title>طلب فحص — ${patientName}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; padding: 1.5cm 1cm; color: #111; font-size: 13px; direction: rtl; }
+    body { font-family: Arial, sans-serif; padding: 1.5cm 1cm; color: #111; font-size: 18px; direction: rtl; }
     ${getClinicHeaderStyles()}
     table { width: 100%; border-collapse: collapse; }
-    th { background: #f5f5f5; padding: 8px 10px; text-align: right; font-size: 11px; font-weight: 600; border: 1px solid #ddd; }
+    th { background: #f5f5f5; padding: 8px 10px; text-align: right; font-size: 18px; font-weight: 600; border: 1px solid #ddd; }
     td { padding: 8px 10px; border: 1px solid #ddd; vertical-align: top; }
     tr:nth-child(even) td { background: #fafafa; }
-    .footer { margin-top: 40px; display: flex; justify-content: space-between; font-size: 11px; color: #888; }
+    .footer { margin-top: 40px; display: flex; justify-content: space-between; font-size: 18px; color: #888; }
     @media print { body { padding: 10px; } }
     @page { size: A4; margin: 0; }
   </style>
@@ -82,11 +82,11 @@ export function TestRequestForm({ patientName }: TestRequestFormProps) {
 
   <!-- Document title -->
   <div style="text-align:center;margin-bottom:16px;">
-    <h2 style="font-size:15px;color:#333;margin:0;">${t('printDocTitle')}</h2>
+    <h2 style="font-size:18px;color:#333;margin:0;">${t('printDocTitle')}</h2>
   </div>
 
   <!-- Patient info row above table -->
-  <div style="display:flex;justify-content:space-between;background:#f8f9fa;border:1px solid #e9ecef;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:13px;">
+  <div style="display:flex;justify-content:space-between;background:#f8f9fa;border:1px solid #e9ecef;border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:18px;">
     <div><strong>${t('printPatient')}: </strong>${patientName}</div>
     <div><strong>${t('printDate')}: </strong>${today}</div>
   </div>

@@ -20,27 +20,27 @@ export function generateClinicHeader(_locale: string, baseUrl: string = ''): str
 export function generateStyles(): string {
   return `
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, Tahoma, sans-serif; padding: 1.5cm 1cm; color: #222; }
+    body { font-family: Arial, sans-serif; padding: 1.5cm 1cm; color: #222; font-size: 18px; }
     ${getClinicHeaderStyles()}
-    .report-date { color: #888; font-size: 12px; margin-bottom: 16px; }
+    .report-date { color: #888; font-size: 18px; margin-bottom: 16px; }
     .section { margin-bottom: 24px; }
-    .section h2 { font-size: 16px; color: #0d7377; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-bottom: 12px; }
+    .section h2 { font-size: 18px; color: #0d7377; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-bottom: 12px; }
     .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; }
-    .info-item { display: flex; gap: 8px; font-size: 14px; }
+    .info-item { display: flex; gap: 8px; font-size: 18px; }
     .info-item .label { color: #666; min-width: 120px; }
     .info-item .value { font-weight: 600; }
     .snapshot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
     .snapshot-card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; text-align: center; }
-    .snapshot-card .snap-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+    .snapshot-card .snap-label { font-size: 18px; color: #666; margin-bottom: 4px; }
     .snapshot-card .snap-value { font-size: 18px; font-weight: 700; color: #0d7377; }
     .medications-list { margin-top: 8px; }
-    .medications-list .med-item { padding: 6px 12px; border-bottom: 1px solid #eee; font-size: 13px; display: flex; justify-content: space-between; }
+    .medications-list .med-item { padding: 6px 12px; border-bottom: 1px solid #eee; font-size: 18px; display: flex; justify-content: space-between; }
     .medications-list .med-item:last-child { border-bottom: none; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 18px; margin-top: 8px; }
     th { background: #0d7377; color: #fff; padding: 8px 12px; }
     td { padding: 8px 12px; border-bottom: 1px solid #eee; }
     tr:nth-child(even) { background: #f9f9f9; }
-    .footer { text-align: center; margin-top: 32px; padding-top: 16px; border-top: 1px solid #ddd; color: #aaa; font-size: 11px; }
+    .footer { text-align: center; margin-top: 32px; padding-top: 16px; border-top: 1px solid #ddd; color: #aaa; font-size: 18px; }
     @media print {
       body { padding: 1.5cm 1cm; }
       .no-print { display: none !important; }

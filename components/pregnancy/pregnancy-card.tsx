@@ -47,6 +47,19 @@ interface LatestVitals {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+// ─── Parse genders (supports single string or JSON array) ────────────────────
+
+export function parseGenders(baby_gender: string | null): string[] {
+  if (!baby_gender) return []
+  try {
+    const parsed = JSON.parse(baby_gender)
+    if (Array.isArray(parsed)) return parsed
+  } catch {
+    // plain string
+  }
+  return [baby_gender]
+}
+
 function getStatusBadgeClass(status: string): string {
   switch (status) {
     case 'active':
@@ -91,9 +104,7 @@ export function PregnancyCard({ pregnancy, latestVitals }: PregnancyCardProps) {
   const isActive = pregnancy.status === 'active'
   const gestationalWeek = isActive ? getGestationalWeek(pregnancy.lmp_date) : null
   const daysUntilDue = isActive ? getDaysUntilDue(pregnancy.expected_due_date) : null
-  const genderLabel =
-    pregnancy.baby_gender === 'male' ? t('genderMaleOption') :
-    pregnancy.baby_gender === 'female' ? t('genderFemaleOption') : null
+  const babyGenders = parseGenders(pregnancy.baby_gender)
 
   function handleStatusChange(newStatus: string) {
     setStatusError(null)
@@ -122,16 +133,35 @@ export function PregnancyCard({ pregnancy, latestVitals }: PregnancyCardProps) {
                 {t(`status.${pregnancy.status}`)}
               </Badge>
 
-              {/* Baby gender badge — fixed for entire pregnancy */}
-              {genderLabel && (
-                <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                  {genderLabel}
-                </Badge>
-              )}
-              {!genderLabel && (
+              {/* Baby gender badges — one per baby */}
+              {babyGenders.length > 0 ? (
+                babyGenders.map((g, i) => (
+                  <Badge
+                    key={i}
+                    variant="outline"
+                    className={
+                      g === 'male'   ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                      g === 'female' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                      'text-muted-foreground'
+                    }
+                  >
+                    {g === 'male' ? t('genderMaleOption') : g === 'female' ? t('genderFemaleOption') : t('genderUnspecified')}
+                    {babyGenders.length > 1 && (
+                      <span className="ms-1 font-normal opacity-60">({i + 1})</span>
+                    )}
+                  </Badge>
+                ))
+              ) : (
                 <Badge variant="outline" className="text-muted-foreground">
                   {t('genderUnspecified')}
                 </Badge>
+              )}
+
+              {/* Notes — shown inline next to gender badges */}
+              {pregnancy.notes && (
+                <span className="text-base font-semibold text-red-600">
+                  {pregnancy.notes}
+                </span>
               )}
             </div>
 
@@ -172,10 +202,6 @@ export function PregnancyCard({ pregnancy, latestVitals }: PregnancyCardProps) {
               )}
             </div>
 
-            {/* Notes */}
-            {pregnancy.notes && (
-              <p className="text-sm text-muted-foreground mt-1">{pregnancy.notes}</p>
-            )}
           </div>
 
           {/* Actions */}
@@ -301,7 +327,17 @@ function EditPregnancyDialog({
   const t = useTranslations('pregnancy')
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const [gender, setGender] = useState<string>(pregnancy.baby_gender ?? '')
+  const initialGenders = parseGenders(pregnancy.baby_gender)
+  const [numBabies, setNumBabies] = useState(Math.max(1, initialGenders.length))
+  const [genders, setGenders] = useState<string[]>(() => {
+    const arr = ['', '', '', '']
+    initialGenders.forEach((g, i) => { arr[i] = g })
+    return arr
+  })
+
+  function setGender(index: number, value: string) {
+    setGenders((prev) => prev.map((g, i) => (i === index ? value : g)))
+  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -309,8 +345,11 @@ function EditPregnancyDialog({
     const form = e.currentTarget
     const formData = new FormData(form)
     formData.set('pregnancy_id', pregnancy.id)
-    if (gender && gender !== '') {
-      formData.set('baby_gender', gender)
+    const activeGenders = genders.slice(0, numBabies)
+    if (numBabies === 1) {
+      if (activeGenders[0]) formData.set('baby_gender', activeGenders[0])
+    } else {
+      formData.set('baby_gender', JSON.stringify(activeGenders))
     }
 
     startTransition(async () => {
@@ -345,22 +384,48 @@ function EditPregnancyDialog({
             />
           </div>
 
-          {/* Baby Gender */}
-          <div className="space-y-1">
-            <Label>{t('editBabyGender')}</Label>
-            <Select
-              value={gender || 'unspecified'}
-              onValueChange={(v) => setGender(v === 'unspecified' ? '' : v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={t('genderUnspecifiedOption')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="unspecified">{t('genderUnspecifiedOption')}</SelectItem>
-                <SelectItem value="male">{t('genderMaleOption')}</SelectItem>
-                <SelectItem value="female">{t('genderFemaleOption')}</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Number of babies */}
+          <div className="space-y-2">
+            <Label>عدد الأجنة</Label>
+            <div className="flex gap-4">
+              {[1, 2, 3, 4].map((n) => (
+                <label key={n} className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="edit_num_babies"
+                    value={n}
+                    checked={numBabies === n}
+                    onChange={() => setNumBabies(n)}
+                    className="accent-primary h-4 w-4"
+                  />
+                  <span className="text-sm font-medium">{n}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Baby gender(s) */}
+          <div className="space-y-2">
+            {Array.from({ length: numBabies }).map((_, i) => (
+              <div key={i} className="space-y-1">
+                <Label>
+                  {t('editBabyGender')}{numBabies > 1 ? ` (${i + 1})` : ''}
+                </Label>
+                <Select
+                  value={genders[i] || 'unspecified'}
+                  onValueChange={(v) => setGender(i, v === 'unspecified' ? '' : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('genderUnspecifiedOption')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unspecified">{t('genderUnspecifiedOption')}</SelectItem>
+                    <SelectItem value="male">{t('genderMaleOption')}</SelectItem>
+                    <SelectItem value="female">{t('genderFemaleOption')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            ))}
           </div>
 
           {/* Notes */}

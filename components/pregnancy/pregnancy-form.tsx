@@ -31,7 +31,6 @@ import { Plus } from 'lucide-react'
 
 const pregnancyFormSchema = z.object({
   lmp_date: z.string().min(1, 'LMP date is required'),
-  baby_gender: z.enum(['male', 'female', '']).optional(),
   notes: z.string().optional(),
 })
 
@@ -48,15 +47,17 @@ export function PregnancyForm({ patientId }: PregnancyFormProps) {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [serverError, setServerError] = useState<string | null>(null)
+  const [numBabies, setNumBabies] = useState(1)
+  const [genders, setGenders] = useState<string[]>(['', '', '', ''])
 
   const form = useForm<PregnancyFormValues>({
     resolver: zodResolver(pregnancyFormSchema),
-    defaultValues: {
-      lmp_date: '',
-      baby_gender: '',
-      notes: '',
-    },
+    defaultValues: { lmp_date: '', notes: '' },
   })
+
+  function setGender(index: number, value: string) {
+    setGenders((prev) => prev.map((g, i) => (i === index ? value : g)))
+  }
 
   function onSubmit(values: PregnancyFormValues) {
     setServerError(null)
@@ -64,19 +65,23 @@ export function PregnancyForm({ patientId }: PregnancyFormProps) {
       const formData = new FormData()
       formData.set('patient_id', patientId)
       formData.set('lmp_date', values.lmp_date)
-      if (values.baby_gender) {
-        formData.set('baby_gender', values.baby_gender)
+
+      const activeGenders = genders.slice(0, numBabies)
+      if (numBabies === 1) {
+        if (activeGenders[0]) formData.set('baby_gender', activeGenders[0])
+      } else {
+        formData.set('baby_gender', JSON.stringify(activeGenders))
       }
-      if (values.notes) {
-        formData.set('notes', values.notes)
-      }
+
+      if (values.notes) formData.set('notes', values.notes)
 
       const result = await createPregnancy(formData)
-
       if (result.error) {
         setServerError(typeof result.error === 'string' ? result.error : 'An error occurred')
       } else {
         form.reset()
+        setNumBabies(1)
+        setGenders(['', '', '', ''])
         setOpen(false)
       }
     })
@@ -97,6 +102,7 @@ export function PregnancyForm({ patientId }: PregnancyFormProps) {
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
+
           {/* LMP Date */}
           <div className="space-y-1">
             <Label htmlFor="lmp_date">{t('form.lmpDate')}</Label>
@@ -119,25 +125,51 @@ export function PregnancyForm({ patientId }: PregnancyFormProps) {
             )}
           </div>
 
-          {/* Baby Gender */}
-          <div className="space-y-1">
-            <Label>جنس المولود (اختياري)</Label>
-            <Select
-              value={form.watch('baby_gender') || 'unspecified'}
-              onValueChange={(v) => form.setValue('baby_gender', v === 'unspecified' ? '' : v as 'male' | 'female' | '')}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="غير محدد بعد" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="unspecified">غير محدد بعد</SelectItem>
-                <SelectItem value="male">ذكر 👦</SelectItem>
-                <SelectItem value="female">أنثى 👧</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Number of babies */}
+          <div className="space-y-2">
+            <Label>عدد الأجنة</Label>
+            <div className="flex gap-4">
+              {[1, 2, 3, 4].map((n) => (
+                <label key={n} className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="num_babies"
+                    value={n}
+                    checked={numBabies === n}
+                    onChange={() => setNumBabies(n)}
+                    className="accent-primary h-4 w-4"
+                  />
+                  <span className="text-sm font-medium">{n}</span>
+                </label>
+              ))}
+            </div>
           </div>
 
-          {/* Notes (optional) */}
+          {/* Baby gender(s) — duplicated per baby count */}
+          <div className="space-y-2">
+            {Array.from({ length: numBabies }).map((_, i) => (
+              <div key={i} className="space-y-1">
+                <Label>
+                  جنس المولود{numBabies > 1 ? ` (${i + 1})` : ''} (اختياري)
+                </Label>
+                <Select
+                  value={genders[i] || 'unspecified'}
+                  onValueChange={(v) => setGender(i, v === 'unspecified' ? '' : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="غير محدد بعد" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unspecified">غير محدد بعد</SelectItem>
+                    <SelectItem value="male">ذكر 👦</SelectItem>
+                    <SelectItem value="female">أنثى 👧</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            ))}
+          </div>
+
+          {/* Notes */}
           <div className="space-y-1">
             <Label htmlFor="pregnancy_notes">{t('form.notes')}</Label>
             <Textarea

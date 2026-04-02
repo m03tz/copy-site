@@ -177,6 +177,7 @@ function MeasurementCard({
                 <DataChip label="HB (g/dL)"           value={m.hb           != null ? fmt(m.hb)           : null} />
                 <DataChip label="PLT"                 value={m.plt          != null ? fmt(m.plt)          : null} />
                 <DataChip label="RBS (mg/dL)"         value={m.rbs          != null ? fmt(m.rbs)          : null} />
+                <DataChip label="UA"                  value={m.ua           ?? null} />
                 <DataChip label="OGTT Fasting (mg/dL)" value={m.ogtt_fasting != null ? fmt(m.ogtt_fasting) : null} />
                 <DataChip label="OGTT 1hr (mg/dL)"    value={m.ogtt_1hr     != null ? fmt(m.ogtt_1hr)     : null} />
                 <DataChip label="OGTT 2hr (mg/dL)"    value={m.ogtt_2hr     != null ? fmt(m.ogtt_2hr)     : null} />
@@ -278,7 +279,7 @@ function EditMeasurementDialog({
     })
   }
 
-  const n = (v: number | null) => (v != null ? String(v) : '')
+  const n = (v: number | string | null) => (v != null ? String(v) : '')
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -379,11 +380,11 @@ function EditMeasurementDialog({
                 {t('measurements.ultrasoundSection')}
               </p>
               <div className="space-y-3">
-                <F label="CRL (mm)" name="crl" type="number" defaultValue={n(m.crl)} />
-                <F label="BPD (mm)" name="bpd" type="number" defaultValue={n(m.bpd)} />
-                <F label="FL (mm)"  name="fl"  type="number" defaultValue={n(m.fl)} />
-                <F label="AC (mm)"  name="ac"  type="number" defaultValue={n(m.ac)} />
-                <F label="EFW (g)"  name="efw" type="number" defaultValue={n(m.efw)} />
+                <F label="CRL (mm)" name="crl" type="text" defaultValue={n(m.crl)} />
+                <F label="BPD (mm)" name="bpd" type="text" defaultValue={n(m.bpd)} />
+                <F label="FL (mm)"  name="fl"  type="text" defaultValue={n(m.fl)} />
+                <F label="AC (mm)"  name="ac"  type="text" defaultValue={n(m.ac)} />
+                <F label="EFW (g)"  name="efw" type="text" defaultValue={n(m.efw)} />
               </div>
             </div>
             <div className="space-y-2">
@@ -394,6 +395,7 @@ function EditMeasurementDialog({
                 <F label={t('measurements.hb')}       name="hb"           type="number" defaultValue={n(m.hb)} />
                 <F label="PLT"                         name="plt"          type="number" defaultValue={n(m.plt)} />
                 <F label={t('measurements.rbs')}       name="rbs"          type="number" defaultValue={n(m.rbs)} />
+                <F label="UA"                           name="ua"           type="text"   defaultValue={m.ua ?? ''} />
                 <F label="OGTT Fasting (mg/dL)"        name="ogtt_fasting" type="number" defaultValue={n(m.ogtt_fasting)} />
                 <F label="OGTT 1hr (mg/dL)"            name="ogtt_1hr"     type="number" defaultValue={n(m.ogtt_1hr)} />
                 <F label="OGTT 2hr (mg/dL)"            name="ogtt_2hr"     type="number" defaultValue={n(m.ogtt_2hr)} />

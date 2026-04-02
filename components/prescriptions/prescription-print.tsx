@@ -1,7 +1,15 @@
-﻿'use client'
+'use client'
 
+import { useState } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { Printer } from 'lucide-react'
 import { format } from 'date-fns'
 import { getClinicHeaderHtml, getClinicHeaderStyles } from '@/lib/print-utils'
@@ -9,17 +17,16 @@ import { getClinicHeaderHtml, getClinicHeaderStyles } from '@/lib/print-utils'
 interface MedicationRow {
   id: string
   medication_name: string
-  dosage: string       // frequency value
-  duration: string     // period
+  dosage: string
+  duration: string
   quantity?: string | null
-  instructions?: string | null  // frequency_type: day | week | month
+  instructions?: string | null
 }
 
 interface PrescriptionPrintProps {
   patientName: string
   visitDate: string
   medications: MedicationRow[]
-  /** Override clinic info (for testing) */
   clinicOverride?: {
     name?: string
     doctorName?: string
@@ -38,6 +45,11 @@ export function PrescriptionPrint({
   const t = useTranslations('prescriptions.print')
   const locale = useLocale()
   const dir = locale === 'ar' ? 'rtl' : 'ltr'
+  const [open, setOpen] = useState(false)
+  // All unchecked by default
+  const [checked, setChecked] = useState<Record<string, boolean>>(
+    Object.fromEntries(medications.map((m) => [m.id, false]))
+  )
 
   let formattedDate = visitDate
   try {
@@ -48,11 +60,17 @@ export function PrescriptionPrint({
 
   const doctorName = clinicOverride?.doctorName ?? t('doctorName')
 
+  function toggleAll(val: boolean) {
+    setChecked(Object.fromEntries(medications.map((m) => [m.id, val])))
+  }
+
   function handlePrint() {
+    const selected = medications.filter((m) => checked[m.id])
+    if (selected.length === 0) return
     const html = generatePrescriptionHtml({
       patientName,
       formattedDate,
-      medications,
+      medications: selected,
       titleLabel: t('title'),
       patientLabel: t('patient'),
       dateLabel: t('date'),
@@ -70,13 +88,69 @@ export function PrescriptionPrint({
         win.print()
       }, { once: true })
     }
+    setOpen(false)
   }
 
+  const anyChecked = Object.values(checked).some(Boolean)
+
   return (
-    <Button onClick={handlePrint} variant="outline" size="sm">
-      <Printer className="h-4 w-4 me-1" />
-      {t('printButton')}
-    </Button>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Printer className="h-4 w-4 me-1" />
+          {t('printButton')}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>اختر الأدوية للطباعة</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          {/* Select all / deselect all */}
+          <div className="flex gap-3 text-xs text-muted-foreground border-b pb-2">
+            <button type="button" className="underline" onClick={() => toggleAll(true)}>
+              تحديد الكل
+            </button>
+            <button type="button" className="underline" onClick={() => toggleAll(false)}>
+              إلغاء الكل
+            </button>
+          </div>
+          {/* Medication checkboxes — unchecked by default */}
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {medications.map((med) => (
+              <label
+                key={med.id}
+                className="flex items-center gap-3 cursor-pointer rounded-md px-2 py-1.5 hover:bg-muted text-sm"
+              >
+                <input
+                  type="checkbox"
+                  checked={!!checked[med.id]}
+                  onChange={(e) =>
+                    setChecked((prev) => ({ ...prev, [med.id]: e.target.checked }))
+                  }
+                  className="h-4 w-4 cursor-pointer rounded border-gray-300 accent-primary"
+                />
+                <span className="flex-1">
+                  <span className="font-medium">{med.medication_name}</span>
+                  {med.dosage && (
+                    <span className="text-muted-foreground ms-2 text-xs">{med.dosage}</span>
+                  )}
+                </span>
+              </label>
+            ))}
+          </div>
+          <div className="flex justify-end gap-2 pt-2 border-t">
+            <Button variant="outline" size="sm" onClick={() => setOpen(false)}>
+              إلغاء
+            </Button>
+            <Button size="sm" onClick={handlePrint} disabled={!anyChecked}>
+              <Printer className="h-4 w-4 me-1" />
+              طباعة المحدد
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -116,7 +190,7 @@ function generatePrescriptionHtml(opts: {
   <title>وصفة طبية</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, Tahoma, "Noto Sans Arabic", sans-serif; color: #000; background: #fff; padding: 1.5cm 1cm; }
+    body { font-family: Arial, sans-serif; color: #000; background: #fff; padding: 1.5cm 1cm; font-size: 18px; }
     @page { size: A4; margin: 0; }
     @media print { body { padding: 1.5cm 1cm; } }
     ${getClinicHeaderStyles()}
@@ -125,12 +199,11 @@ function generatePrescriptionHtml(opts: {
 <body>
   ${getClinicHeaderHtml(window.location.origin)}
 
-  <div style="display:flex;justify-content:space-between;gap:16px;background:#f8f9fa;padding:10px 16px;border-radius:4px;margin-bottom:20px;font-size:13px;">
+  <div style="display:flex;justify-content:space-between;gap:16px;background:#f8f9fa;padding:10px 16px;border-radius:4px;margin-bottom:20px;font-size:18px;">
     <span><strong>${opts.patientLabel}: </strong>${opts.patientName}</span>
     <span><strong>${opts.dateLabel}: </strong>${opts.formattedDate}</span>
   </div>
 
-  <!-- Medications table -->
   <table style="width:100%;border-collapse:collapse;margin-bottom:40px;">
     <thead>
       <tr style="background:#0d7377;color:#fff;">
@@ -145,16 +218,15 @@ function generatePrescriptionHtml(opts: {
     <tbody>${rows}</tbody>
   </table>
 
-  <!-- Signature -->
   <div style="margin-top:60px;text-align:start;">
     <div style="display:inline-block;min-width:200px;border-top:1px solid #000;padding-top:8px;text-align:center;">
-      <p style="margin:0;font-size:13px;">${opts.signatureLabel}</p>
-      <p style="margin:4px 0 0;font-weight:600;font-size:13px;">${opts.doctorName}</p>
+      <p style="margin:0;font-size:18px;">${opts.signatureLabel}</p>
+      <p style="margin:4px 0 0;font-weight:600;font-size:18px;">${opts.doctorName}</p>
     </div>
   </div>
 </body>
 </html>`
 }
 
-const thStyle = `padding:10px 12px;text-align:start;font-weight:600;font-size:13px;border:1px solid #0d7377;`
-const tdStyle = `padding:8px 12px;border:1px solid #ddd;font-size:13px;vertical-align:middle`
+const thStyle = `padding:10px 12px;text-align:start;font-weight:600;font-size:18px;border:1px solid #0d7377;`
+const tdStyle = `padding:8px 12px;border:1px solid #ddd;font-size:18px;vertical-align:middle`

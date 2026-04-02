@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -68,21 +67,53 @@ const THROMBOPHILA_ITEMS = [
   'ANA',
 ]
 
+// ─── Arabic strings (always used — UI and print) ──────────────────────────────
+
+const AR = {
+  selectType:          'اختر نوع الفحص',
+  tmplSFA:             'سائل منوي (SFA)',
+  tmplIVF:             'برنامج الزراعة (IVF)',
+  tmplHP:              'هرمونات (HP)',
+  tmplInvestigation:   'فحوصات مخبرية',
+  tmplVitD:            'فيتامين د (Vit D)',
+  tmplHSG:             'صورة ملونة (HSG)',
+  tmplThrombophilia:   'تجلط الدم (Thrombophilia)',
+  sfaDaysLabel:        'عدد أيام الامتناع',
+  sfaDaysNote:         (days: string) => `يمنع العلاقه الزوجيه لمده ${days} ايام`,
+  sfaExtraNotes:       'ملاحظات إضافية',
+  sfaNotesPlaceholder: 'ملاحظات اختيارية...',
+  ivfHint:             'برنامج الزراعة — أدخل الجرعات والتواريخ',
+  hpTests:             'الفحوصات المطلوبة',
+  instructions:        'تعليمات',
+  invTests:            'الفحوصات المخبرية',
+  invCustomLabel:      'فحوصات إضافية (سطر لكل فحص)',
+  invCustomPlaceholder:'أضف فحوصات أخرى...',
+  invNotes:            'ملاحظات',
+  vitdMedLabel:        'الدواء',
+  throTests:           'فحوصات التخثر',
+  printBtn:            'طباعة',
+  printName:           'الاسم',
+  printDate:           'التاريخ',
+  doctorSignature:     'توقيع الطبيب',
+  defaultHpNotes:      'فحص هرمونات // اليوم الثاني من الدوره',
+  defaultVitdNotes:    'فيتامين د / حبة مرتين بالاسبوع بعد وجبة الغداء',
+  defaultHsgNotes:     'صوره ملونه للرحم // اليوم العاشر من الدوره\nيمنع العلاقه الزوجيه قبل الصوره ب 3 ايام',
+  defaultThroNotes:    'بعد 6 اسابيع من التنزيل',
+} as const
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function InvestigateForm({ patientName }: InvestigateFormProps) {
-  const t = useTranslations('investigate')
-  const locale = useLocale()
   const today = format(new Date(), 'dd-MM-yyyy')
 
-  const TEMPLATES: { id: TemplateId; labelKey: string; Icon: React.ComponentType<{ className?: string }> }[] = [
-    { id: 'sfa',           labelKey: 'tmplSFA',          Icon: FlaskConical },
-    { id: 'ivf',           labelKey: 'tmplIVF',          Icon: Baby         },
-    { id: 'hp',            labelKey: 'tmplHP',           Icon: TestTube     },
-    { id: 'investigation', labelKey: 'tmplInvestigation', Icon: Microscope  },
-    { id: 'vitd',          labelKey: 'tmplVitD',         Icon: Pill         },
-    { id: 'hsg',           labelKey: 'tmplHSG',          Icon: Droplets     },
-    { id: 'thrombophila',  labelKey: 'tmplThrombophilia', Icon: ShieldAlert },
+  const TEMPLATES: { id: TemplateId; labelKey: keyof typeof AR; Icon: React.ComponentType<{ className?: string }> }[] = [
+    { id: 'sfa',           labelKey: 'tmplSFA',           Icon: FlaskConical },
+    { id: 'ivf',           labelKey: 'tmplIVF',           Icon: Baby         },
+    { id: 'hp',            labelKey: 'tmplHP',            Icon: TestTube     },
+    { id: 'investigation', labelKey: 'tmplInvestigation', Icon: Microscope   },
+    { id: 'vitd',          labelKey: 'tmplVitD',          Icon: Pill         },
+    { id: 'hsg',           labelKey: 'tmplHSG',           Icon: Droplets     },
+    { id: 'thrombophila',  labelKey: 'tmplThrombophilia', Icon: ShieldAlert  },
   ]
 
   const [selected, setSelected] = useState<TemplateId>('sfa')
@@ -98,7 +129,7 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
   const [hpChecked, setHpChecked] = useState<Record<string, boolean>>(
     Object.fromEntries(HP_ITEMS.map((i) => [i, false]))
   )
-  const [hpNotes, setHpNotes] = useState(() => t('defaultHpNotes'))
+  const [hpNotes, setHpNotes] = useState<string>(AR.defaultHpNotes)
 
   // Investigation state
   const [invChecked, setInvChecked] = useState<Record<string, boolean>>(
@@ -109,16 +140,16 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
 
   // Vit D state
   const [vitdMed, setVitdMed] = useState('Biodal  5000 UNITE')
-  const [vitdNotes, setVitdNotes] = useState(() => t('defaultVitdNotes'))
+  const [vitdNotes, setVitdNotes] = useState<string>(AR.defaultVitdNotes)
 
   // HSG state
-  const [hsgNotes, setHsgNotes] = useState(() => t('defaultHsgNotes'))
+  const [hsgNotes, setHsgNotes] = useState<string>(AR.defaultHsgNotes)
 
   // Thrombophilia state
   const [throChecked, setThroChecked] = useState<Record<string, boolean>>(
     Object.fromEntries(THROMBOPHILA_ITEMS.map((i) => [i, false]))
   )
-  const [throNotes, setThroNotes] = useState(() => t('defaultThroNotes'))
+  const [throNotes, setThroNotes] = useState<string>(AR.defaultThroNotes)
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   function updateIvfRow(index: number, field: keyof IvfRow, value: string) {
@@ -128,17 +159,17 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
   function toggleInv(item: string) { setInvChecked((prev) => ({ ...prev, [item]: !prev[item] })) }
   function toggleThro(item: string) { setThroChecked((prev) => ({ ...prev, [item]: !prev[item] })) }
 
-  // ── Print ──────────────────────────────────────────────────────────────────
+  // ── Print (always Arabic / RTL) ────────────────────────────────────────────
   function handlePrint() {
-    const dir = locale === 'ar' ? 'rtl' : 'ltr'
-    const lang = locale === 'ar' ? 'ar' : 'en'
-    const tmplLabel = t(TEMPLATES.find((x) => x.id === selected)!.labelKey)
+    const dir = 'rtl'
+    const lang = 'ar'
+    const tmplLabel = AR[TEMPLATES.find((x) => x.id === selected)!.labelKey] as string
 
     let bodyHtml = ''
 
     if (selected === 'sfa') {
       bodyHtml = `
-        <p class="instruction">${t('sfaDaysNote', { days: sfaDays })}</p>
+        <p class="instruction">${AR.sfaDaysNote(sfaDays)}</p>
         ${sfaNotes ? `<p class="notes">${sfaNotes.replace(/\n/g, '<br/>')}</p>` : ''}
       `
     } else if (selected === 'ivf') {
@@ -149,7 +180,7 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
           <thead>
             <tr>
               <th>DAY</th>
-              <th>${t('printDate')}</th>
+              <th>${AR.printDate}</th>
               <th>MERIONAL<br/><small>(بالعضل)</small></th>
               <th>Cetrotide<br/><small>(تحت الجلد)</small></th>
               <th>Chorimoin<br/><small>(بالعضل)</small></th>
@@ -199,22 +230,22 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
   <title>${tmplLabel}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Arial','Tahoma',sans-serif; direction: ${dir}; padding: 1.5cm 2cm; color: #111; min-height: 29.7cm; position: relative; }
+    body { font-family: Arial, sans-serif; direction: ${dir}; padding: 1.5cm 2cm; color: #111; min-height: 29.7cm; position: relative; font-size:18px; }
     ${getClinicHeaderStyles()}
-    .report-meta { display:flex; justify-content:space-between; margin-bottom:24px; font-size:13px; color:#444; border-bottom:1px solid #e0e0e0; padding-bottom:10px; }
+    .report-meta { display:flex; justify-content:space-between; margin-bottom:24px; font-size:18px; color:#444; border-bottom:1px solid #e0e0e0; padding-bottom:10px; }
     .report-meta span { font-weight:bold; color:#111; }
-    .report-title { font-size:17px; font-weight:bold; text-align:center; margin-bottom:28px; text-decoration:underline; text-underline-offset:5px; }
-    .instruction { font-size:14px; line-height:2.2; margin-bottom:12px; }
-    .medication { font-size:15px; margin-bottom:12px; }
-    .notes { font-size:13px; color:#444; margin-top:16px; line-height:2; border-top:1px dashed #ccc; padding-top:10px; }
-    .check-list { list-style:none; font-size:14px; line-height:2.2; margin-bottom:16px; padding-${dir === 'rtl' ? 'right' : 'left'}:0; }
-    .check-list li { padding-${dir === 'rtl' ? 'right' : 'left'}:8px; }
-    .ivf-table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:16px; }
+    .report-title { font-size:18px; font-weight:bold; text-align:center; margin-bottom:28px; text-decoration:underline; text-underline-offset:5px; }
+    .instruction { font-size:18px; line-height:2.2; margin-bottom:12px; }
+    .medication { font-size:18px; margin-bottom:12px; }
+    .notes { font-size:18px; color:#444; margin-top:16px; line-height:2; border-top:1px dashed #ccc; padding-top:10px; }
+    .check-list { list-style:none; font-size:18px; line-height:2.2; margin-bottom:16px; padding-right:0; }
+    .check-list li { padding-right:8px; }
+    .ivf-table { width:100%; border-collapse:collapse; font-size:18px; margin-bottom:16px; }
     .ivf-table th, .ivf-table td { border:1px solid #ccc; padding:5px 8px; text-align:center; }
     .ivf-table th { background:#f0f0f0; font-weight:bold; }
     .stamp-area { position:absolute; bottom:2.5cm; left:2cm; width:140px; height:140px; }
     .stamp-area img { width:140px; height:140px; object-fit:contain; }
-    .signature-area { position:absolute; bottom:2.5cm; right:2cm; text-align:center; font-size:13px; }
+    .signature-area { position:absolute; bottom:2.5cm; right:2cm; text-align:center; font-size:18px; }
     .signature-line { border-top:1px solid #333; width:160px; margin:40px auto 6px; }
     @media print { body { padding:1cm 1.5cm; } @page { size:A4; margin:0; } }
   </style>
@@ -222,8 +253,8 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
 <body>
   ${getClinicHeaderHtml()}
   <div class="report-meta">
-    <div>${t('printName')}: <span>${patientName}</span></div>
-    <div>${t('printDate')}: <span>${today}</span></div>
+    <div>${AR.printName}: <span>${patientName}</span></div>
+    <div>${AR.printDate}: <span>${today}</span></div>
   </div>
   <div class="report-title">${tmplLabel}</div>
   ${bodyHtml}
@@ -232,7 +263,7 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
   </div>
   <div class="signature-area">
     <div class="signature-line"></div>
-    <div>${t('doctorSignature')}</div>
+    <div>${AR.doctorSignature}</div>
   </div>
 </body>
 </html>`
@@ -244,11 +275,11 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-2xl" dir="rtl">
 
       {/* ── Template selector ── */}
       <div>
-        <Label className="mb-3 block text-sm font-medium">{t('selectType')}</Label>
+        <Label className="mb-3 block text-sm font-medium">{AR.selectType}</Label>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           {TEMPLATES.map(({ id, labelKey, Icon }) => (
             <button
@@ -263,7 +294,7 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
               )}
             >
               <Icon className={cn('h-5 w-5', selected === id ? 'text-primary' : 'text-muted-foreground')} />
-              <span className="leading-tight">{t(labelKey)}</span>
+              <span className="leading-tight">{AR[labelKey] as string}</span>
             </button>
           ))}
         </div>
@@ -273,7 +304,7 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
       {selected === 'sfa' && (
         <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
           <div className="space-y-1">
-            <Label>{t('sfaDaysLabel')}</Label>
+            <Label>{AR.sfaDaysLabel}</Label>
             <Input
               type="number"
               min="1"
@@ -283,17 +314,17 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
               dir="ltr"
             />
             <p className="text-xs text-muted-foreground">
-              {t('sfaDaysNote', { days: sfaDays })}
+              {AR.sfaDaysNote(sfaDays)}
             </p>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">{t('sfaExtraNotes')}</Label>
+            <Label className="text-xs">{AR.sfaExtraNotes}</Label>
             <Textarea
               value={sfaNotes}
               onChange={(e) => setSfaNotes(e.target.value)}
               rows={2}
               className="text-sm resize-none"
-              placeholder={t('sfaNotesPlaceholder')}
+              placeholder={AR.sfaNotesPlaceholder}
               dir="auto"
             />
           </div>
@@ -303,7 +334,7 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
       {/* ── IVF ── */}
       {selected === 'ivf' && (
         <div className="space-y-2 rounded-lg border bg-muted/30 p-4 overflow-x-auto">
-          <p className="text-xs text-muted-foreground mb-2">{t('ivfHint')}</p>
+          <p className="text-xs text-muted-foreground mb-2">{AR.ivfHint}</p>
           <table className="w-full text-xs border-collapse">
             <thead>
               <tr className="bg-muted">
@@ -341,7 +372,7 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
       {selected === 'hp' && (
         <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
           <div className="space-y-2">
-            <Label className="text-sm">{t('hpTests')}</Label>
+            <Label className="text-sm">{AR.hpTests}</Label>
             <div className="grid grid-cols-2 gap-2">
               {HP_ITEMS.map((item) => (
                 <div key={item} className="flex items-center gap-2">
@@ -358,7 +389,7 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
             </div>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">{t('instructions')}</Label>
+            <Label className="text-xs">{AR.instructions}</Label>
             <Textarea
               value={hpNotes}
               onChange={(e) => setHpNotes(e.target.value)}
@@ -374,7 +405,7 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
       {selected === 'investigation' && (
         <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
           <div className="space-y-2">
-            <Label className="text-sm">{t('invTests')}</Label>
+            <Label className="text-sm">{AR.invTests}</Label>
             <div className="grid grid-cols-2 gap-2">
               {INVESTIGATION_ITEMS.map((item) => (
                 <div key={item} className="flex items-center gap-2">
@@ -391,18 +422,18 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
             </div>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">{t('invCustomLabel')}</Label>
+            <Label className="text-xs">{AR.invCustomLabel}</Label>
             <Textarea
               value={invCustom}
               onChange={(e) => setInvCustom(e.target.value)}
               rows={3}
               className="text-sm resize-none"
-              placeholder={t('invCustomPlaceholder')}
+              placeholder={AR.invCustomPlaceholder}
               dir="auto"
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">{t('invNotes')}</Label>
+            <Label className="text-xs">{AR.invNotes}</Label>
             <Textarea
               value={invNotes}
               onChange={(e) => setInvNotes(e.target.value)}
@@ -418,7 +449,7 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
       {selected === 'vitd' && (
         <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
           <div className="space-y-1">
-            <Label>{t('vitdMedLabel')}</Label>
+            <Label>{AR.vitdMedLabel}</Label>
             <Input
               value={vitdMed}
               onChange={(e) => setVitdMed(e.target.value)}
@@ -427,7 +458,7 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">{t('instructions')}</Label>
+            <Label className="text-xs">{AR.instructions}</Label>
             <Textarea
               value={vitdNotes}
               onChange={(e) => setVitdNotes(e.target.value)}
@@ -443,7 +474,7 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
       {selected === 'hsg' && (
         <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
           <div className="space-y-1">
-            <Label>{t('instructions')}</Label>
+            <Label>{AR.instructions}</Label>
             <Textarea
               value={hsgNotes}
               onChange={(e) => setHsgNotes(e.target.value)}
@@ -459,7 +490,7 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
       {selected === 'thrombophila' && (
         <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
           <div className="space-y-2">
-            <Label className="text-sm">{t('throTests')}</Label>
+            <Label className="text-sm">{AR.throTests}</Label>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {THROMBOPHILA_ITEMS.map((item) => (
                 <div key={item} className="flex items-center gap-2">
@@ -476,7 +507,7 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
             </div>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">{t('invNotes')}</Label>
+            <Label className="text-xs">{AR.invNotes}</Label>
             <Textarea
               value={throNotes}
               onChange={(e) => setThroNotes(e.target.value)}
@@ -489,10 +520,10 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
       )}
 
       {/* ── Print button ── */}
-      <div className="flex justify-end">
+      <div className="flex justify-start">
         <Button onClick={handlePrint} className="gap-2">
           <Printer className="h-4 w-4" />
-          {t('printBtn')}
+          {AR.printBtn}
         </Button>
       </div>
     </div>

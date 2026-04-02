@@ -72,14 +72,14 @@ function buildStructuredPrintBlock(lt: LabTest, data: Record<string, string>, t:
         <tr>
           <td>${FIELD_LABELS[field.key]}</td>
           <td style="color:${color};${bold}">${value}${icon ? ' ' + icon : ''}</td>
-          <td style="color:#666;font-size:12px;">${ref?.hint ?? '—'}</td>
+          <td style="color:#666;font-size:18px;">${ref?.hint ?? '—'}</td>
           <td style="color:${color};${bold}">${label}</td>
         </tr>`
     }).join('')
 
     return `
       <div style="margin-bottom:16px;">
-        <p style="font-size:13px;font-weight:600;color:#444;margin-bottom:6px;">${section.icon} ${section.label}</p>
+        <p style="font-size:18px;font-weight:600;color:#444;margin-bottom:6px;">${section.icon} ${section.label}</p>
         <table>
           <thead>
             <tr>
@@ -95,14 +95,14 @@ function buildStructuredPrintBlock(lt: LabTest, data: Record<string, string>, t:
   }).join('')
 
   const notesHtml = lt.doctor_notes
-    ? `<div style="margin-top:12px;padding:8px 12px;background:#f5f5f5;border-radius:4px;font-size:13px;">
+    ? `<div style="margin-top:12px;padding:8px 12px;background:#f5f5f5;border-radius:4px;font-size:18px;">
         <strong>${t('doctorNotes')}:</strong> ${lt.doctor_notes}
        </div>`
     : ''
 
   return `
     <div style="margin-bottom:32px;page-break-inside:avoid;">
-      <h3 style="font-size:15px;color:#0d7377;border-bottom:1px solid #ddd;padding-bottom:6px;margin-bottom:14px;">
+      <h3 style="font-size:18px;color:#0d7377;border-bottom:1px solid #ddd;padding-bottom:6px;margin-bottom:14px;">
         ${lt.test_name} — ${lt.test_date}
       </h3>
       ${sectionHtml}
@@ -198,7 +198,7 @@ export function LabTestList({ labTests, patientId, patientName }: LabTestListPro
       : ''
 
     const contentHtml = labTests.length === 0
-      ? `<p style="color:#888;font-size:13px;">${t('empty')}</p>`
+      ? `<p style="color:#888;font-size:18px;">${t('empty')}</p>`
       : structuredBlocks.join('') + oldTableHtml
 
     const html = `<!DOCTYPE html>

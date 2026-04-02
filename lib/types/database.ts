@@ -358,12 +358,12 @@ export interface Database {
           blood_pressure: string | null
           fetal_heartbeat: number | null
           notes: string | null
-          // ANC ultrasound fields
-          crl: number | null
-          bpd: number | null
-          fl: number | null
-          ac: number | null
-          efw: number | null
+          // ANC ultrasound fields (TEXT — free text allowed)
+          crl: string | null
+          bpd: string | null
+          fl: string | null
+          ac: string | null
+          efw: string | null
           // ANC lab fields
           hb: number | null
           rbs: number | null
@@ -391,11 +391,11 @@ export interface Database {
           blood_pressure?: string | null
           fetal_heartbeat?: number | null
           notes?: string | null
-          crl?: number | null
-          bpd?: number | null
-          fl?: number | null
-          ac?: number | null
-          efw?: number | null
+          crl?: string | null
+          bpd?: string | null
+          fl?: string | null
+          ac?: string | null
+          efw?: string | null
           hb?: number | null
           rbs?: number | null
           tsh_lab?: number | null
@@ -421,11 +421,11 @@ export interface Database {
           blood_pressure?: string | null
           fetal_heartbeat?: number | null
           notes?: string | null
-          crl?: number | null
-          bpd?: number | null
-          fl?: number | null
-          ac?: number | null
-          efw?: number | null
+          crl?: string | null
+          bpd?: string | null
+          fl?: string | null
+          ac?: string | null
+          efw?: string | null
           hb?: number | null
           rbs?: number | null
           tsh_lab?: number | null
@@ -466,6 +466,7 @@ export interface Database {
           amh: number | null
           tsh: number | null
           prl: number | null
+          homa_score: number | null
           sfa_count: number | null
           sfa_motility: number | null
           sfa_morphology: number | null
@@ -495,6 +496,7 @@ export interface Database {
           amh?: number | null
           tsh?: number | null
           prl?: number | null
+          homa_score?: number | null
           sfa_count?: number | null
           sfa_motility?: number | null
           sfa_morphology?: number | null
@@ -524,6 +526,7 @@ export interface Database {
           amh?: number | null
           tsh?: number | null
           prl?: number | null
+          homa_score?: number | null
           sfa_count?: number | null
           sfa_motility?: number | null
           sfa_morphology?: number | null

@@ -38,11 +38,11 @@ function printPrescription(patientName: string, medications: FormValues['medicat
   const dir = isAr ? 'rtl' : 'ltr'
   const lang = isAr ? 'ar' : 'en'
   const today = new Date().toLocaleDateString(isAr ? 'ar-JO' : 'en-GB')
-  const tdStyle = 'padding:9px 12px;border:1px solid #ddd;font-size:13px;vertical-align:middle'
+  const tdStyle = 'padding:9px 12px;border:1px solid #ddd;font-size:18px;vertical-align:middle'
 
   const labels = isAr
-    ? { patient: 'اسم المريضة', date: 'التاريخ', medication: 'الدواء', dose: 'الجرعة', amount: 'الكمية', frequency: 'التكرار', duration: 'المدة', signature: 'توقيع الطبيب', doctor: 'د. فادي السحلة', title: 'وصفة طبية' }
-    : { patient: 'Patient', date: 'Date', medication: 'Medication', dose: 'Dose', amount: 'Amount', frequency: 'Frequency', duration: 'Duration', signature: 'Doctor Signature', doctor: 'Dr. Fadi Al-Sahla', title: 'Prescription' }
+    ? { patient: 'اسم المريضة', date: 'التاريخ', medication: 'الدواء', dose: 'الجرعة', frequency: 'في اليوم', amount: 'الكمية', duration: 'المدة', signature: 'توقيع الطبيب', doctor: 'د. فادي السحلة', title: 'وصفة طبية' }
+    : { patient: 'Patient', date: 'Date', medication: 'Drug', dose: 'Dose', frequency: 'Per/Day', amount: 'Quantity', duration: 'Duration', signature: 'Doctor Signature', doctor: 'Dr. Fadi Al-Sahla', title: 'Prescription' }
 
   const rows = medications
     .filter((m) => m.medication_name)
@@ -52,8 +52,8 @@ function printPrescription(patientName: string, medications: FormValues['medicat
         <td style="${tdStyle}">${i + 1}</td>
         <td style="${tdStyle}">${m.medication_name}</td>
         <td style="${tdStyle};text-align:center">${m.dose}</td>
-        <td style="${tdStyle};text-align:center">${m.amount ?? '—'}</td>
         <td style="${tdStyle};text-align:center">${m.frequency ?? '—'}</td>
+        <td style="${tdStyle};text-align:center">${m.amount ?? '—'}</td>
         <td style="${tdStyle};text-align:center">${m.duration}</td>
       </tr>`
     )
@@ -66,16 +66,16 @@ function printPrescription(patientName: string, medications: FormValues['medicat
   <title>${labels.title} — ${patientName}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, Tahoma, "Noto Sans Arabic", sans-serif; padding: 1.5cm 1cm; color: #111; font-size: 13px; direction: ${dir}; }
+    body { font-family: Arial, Tahoma, "Noto Sans Arabic", sans-serif; padding: 1.5cm 1cm; color: #111; font-size: 18px; direction: ${dir}; }
     ${getClinicHeaderStyles()}
-    .patient-row { display: flex; gap: 16px; background: #f8f9fa; padding: 10px 16px; border-radius: 4px; margin-bottom: 20px; font-size: 13px; }
+    .patient-row { display: flex; gap: 16px; background: #f8f9fa; padding: 10px 16px; border-radius: 4px; margin-bottom: 20px; font-size: 18px; }
     .patient-row strong { color: #444; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
     thead tr { background: #0d7377; color: #fff; }
-    th { padding: 10px 12px; text-align: ${isAr ? 'right' : 'left'}; font-size: 13px; font-weight: 600; }
-    td { padding: 9px 12px; border: 1px solid #ddd; font-size: 13px; vertical-align: middle; }
+    th { padding: 10px 12px; text-align: ${isAr ? 'right' : 'left'}; font-size: 18px; font-weight: 600; }
+    td { padding: 9px 12px; border: 1px solid #ddd; font-size: 18px; vertical-align: middle; }
     .sig { margin-top: 60px; }
-    .sig-line { display: inline-block; min-width: 200px; border-top: 1px solid #000; padding-top: 8px; text-align: center; font-size: 13px; }
+    .sig-line { display: inline-block; min-width: 200px; border-top: 1px solid #000; padding-top: 8px; text-align: center; font-size: 18px; }
     @media print { body { padding: 10px; } }
     @page { size: A4; margin: 0; }
   </style>
@@ -92,8 +92,8 @@ function printPrescription(patientName: string, medications: FormValues['medicat
         <th style="width:4%">#</th>
         <th style="width:35%">${labels.medication}</th>
         <th style="width:15%;text-align:center">${labels.dose}</th>
-        <th style="width:15%;text-align:center">${labels.amount}</th>
         <th style="width:16%;text-align:center">${labels.frequency}</th>
+        <th style="width:15%;text-align:center">${labels.amount}</th>
         <th style="width:15%;text-align:center">${labels.duration}</th>
       </tr>
     </thead>
@@ -186,12 +186,10 @@ export function StandaloneMedicationButton({ patientId, patientName }: Standalon
             {/* Column headers */}
             <div className="grid grid-cols-[16px_2fr_1fr_1fr_1fr_1fr_32px] gap-2 px-1 text-xs font-medium text-muted-foreground">
               <div />
-              <span>
-                Medication <span className="text-destructive">*</span>
-              </span>
+              <span>Drug <span className="text-destructive">*</span></span>
               <span>Dose</span>
-              <span>Amount</span>
-              <span>Frequency</span>
+              <span>Per/Day</span>
+              <span>Quantity</span>
               <span>Duration</span>
               <div />
             </div>
@@ -217,13 +215,13 @@ export function StandaloneMedicationButton({ patientId, patientName }: Standalon
                   />
 
                   <Input
-                    {...form.register(`medications.${index}.amount`)}
-                    placeholder="e.g., 1 tab"
+                    {...form.register(`medications.${index}.frequency`)}
+                    placeholder="e.g., twice daily"
                   />
 
                   <Input
-                    {...form.register(`medications.${index}.frequency`)}
-                    placeholder="e.g., twice daily"
+                    {...form.register(`medications.${index}.amount`)}
+                    placeholder="e.g., 1 tab"
                   />
 
                   <Input

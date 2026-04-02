@@ -65,6 +65,7 @@ function buildPayload(formData: FormData) {
     amh:            toNum(formData.get('amh')),
     tsh:            toNum(formData.get('tsh')),
     prl:            toNum(formData.get('prl')),
+    homa_score:     toNum(formData.get('homa_score')),
     // SFA
     sfa_count:      toNum(formData.get('sfa_count')),
     sfa_motility:   toNum(formData.get('sfa_motility')),

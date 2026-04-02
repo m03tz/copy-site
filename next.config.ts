@@ -10,6 +10,15 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '10mb',
     },
   },
+  transpilePackages: [
+    '@supabase/auth-js',
+    '@supabase/functions-js',
+    '@supabase/realtime-js',
+    '@supabase/ssr',
+    '@supabase/storage-js',
+    '@supabase/supabase-js',
+    '@supabase/postgrest-js',
+  ],
 };
 
 export default withNextIntl(nextConfig);

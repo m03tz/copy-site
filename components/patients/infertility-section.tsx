@@ -61,6 +61,7 @@ function emptyForm(rec?: InfertilityRecord) {
     amh:            rec?.amh !== null && rec?.amh !== undefined ? String(rec.amh) : '',
     tsh:            rec?.tsh !== null && rec?.tsh !== undefined ? String(rec.tsh) : '',
     prl:            rec?.prl !== null && rec?.prl !== undefined ? String(rec.prl) : '',
+    homa_score:     rec?.homa_score !== null && rec?.homa_score !== undefined ? String(rec.homa_score) : '',
     sfa_count:      rec?.sfa_count !== null && rec?.sfa_count !== undefined ? String(rec.sfa_count) : '',
     sfa_motility:   rec?.sfa_motility !== null && rec?.sfa_motility !== undefined ? String(rec.sfa_motility) : '',
     sfa_morphology: rec?.sfa_morphology !== null && rec?.sfa_morphology !== undefined ? String(rec.sfa_morphology) : '',
@@ -151,11 +152,12 @@ function RecordFormDialog({ open, onClose, patientId, editRecord, nextVisitNum }
             <div className="space-y-3">
               <SectionTitle icon={<FlaskConical className="h-3.5 w-3.5" />} label={t('form.hormones')} />
               <div className="grid grid-cols-2 gap-3">
-                <NumField label="FSH (IU/L)"  name="fsh" defaultValue={def.fsh} />
-                <NumField label="AMH (ng/mL)" name="amh" defaultValue={def.amh} />
-                <NumField label="PRL (ng/mL)" name="prl" defaultValue={def.prl} />
-                <NumField label="LH (IU/L)"   name="lh"  defaultValue={def.lh} />
-                <NumField label="TSH (mIU/L)" name="tsh" defaultValue={def.tsh} />
+                <NumField label="FSH (IU/L)"    name="fsh"        defaultValue={def.fsh} />
+                <NumField label="LH (IU/L)"     name="lh"         defaultValue={def.lh} />
+                <NumField label="TSH (mIU/L)"   name="tsh"        defaultValue={def.tsh} />
+                <NumField label="PRL (ng/mL)"   name="prl"        defaultValue={def.prl} />
+                <NumField label="AMH (ng/mL)"   name="amh"        defaultValue={def.amh} />
+                <NumField label="HOMA Score"    name="homa_score" defaultValue={def.homa_score} />
               </div>
             </div>
 
@@ -233,7 +235,7 @@ function RecordCard({ record, patientId, patientName, canEdit }: RecordCardProps
   function handlePrint() {
     const win = window.open('', '_blank')
     if (!win) return
-    const hasHormones = record.fsh || record.lh || record.amh || record.tsh || record.prl
+    const hasHormones = record.fsh || record.lh || record.amh || record.tsh || record.prl || record.homa_score || record.homa_score
     const hasSFA = record.sfa_count || record.sfa_motility || record.sfa_morphology || record.sfa_viscosity
     const hasHSG = record.hsg_result || record.hsg_date
 
@@ -276,11 +278,12 @@ function RecordCard({ record, patientId, patientName, canEdit }: RecordCardProps
         </div></div>` : ''}
       ${hasHormones ? `<div class="section"><div class="section-title">الهرمونات</div>
         <div class="grid3">
-          ${record.fsh ? `<div class="chip"><div class="chip-label">FSH</div><div class="chip-val">${record.fsh} IU/L</div></div>` : ''}
-          ${record.lh  ? `<div class="chip"><div class="chip-label">LH</div><div class="chip-val">${record.lh} IU/L</div></div>` : ''}
-          ${record.amh ? `<div class="chip"><div class="chip-label">AMH</div><div class="chip-val">${record.amh} ng/mL</div></div>` : ''}
-          ${record.tsh ? `<div class="chip"><div class="chip-label">TSH</div><div class="chip-val">${record.tsh} mIU/L</div></div>` : ''}
-          ${record.prl ? `<div class="chip"><div class="chip-label">PRL</div><div class="chip-val">${record.prl} ng/mL</div></div>` : ''}
+          ${record.fsh        ? `<div class="chip"><div class="chip-label">FSH</div><div class="chip-val">${record.fsh} IU/L</div></div>` : ''}
+          ${record.lh         ? `<div class="chip"><div class="chip-label">LH</div><div class="chip-val">${record.lh} IU/L</div></div>` : ''}
+          ${record.tsh        ? `<div class="chip"><div class="chip-label">TSH</div><div class="chip-val">${record.tsh} mIU/L</div></div>` : ''}
+          ${record.prl        ? `<div class="chip"><div class="chip-label">PRL</div><div class="chip-val">${record.prl} ng/mL</div></div>` : ''}
+          ${record.amh        ? `<div class="chip"><div class="chip-label">AMH</div><div class="chip-val">${record.amh} ng/mL</div></div>` : ''}
+          ${record.homa_score ? `<div class="chip"><div class="chip-label">HOMA Score</div><div class="chip-val">${record.homa_score}</div></div>` : ''}
         </div></div>` : ''}
       ${hasSFA ? `<div class="section"><div class="section-title">SFA — تحليل السائل المنوي</div>
         <div class="grid3">
@@ -301,7 +304,7 @@ function RecordCard({ record, patientId, patientName, canEdit }: RecordCardProps
     setTimeout(() => win.print(), 300)
   }
 
-  const hasHormones = record.fsh || record.lh || record.amh || record.tsh || record.prl
+  const hasHormones = record.fsh || record.lh || record.amh || record.tsh || record.prl || record.homa_score
   const hasSFA = record.sfa_count || record.sfa_motility || record.sfa_morphology || record.sfa_viscosity
 
   return (
@@ -371,11 +374,12 @@ function RecordCard({ record, patientId, patientName, canEdit }: RecordCardProps
                 <FlaskConical className="h-3 w-3" /> {t('hormones')}
               </p>
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                <HormoneChip label="FSH" value={record.fsh} unit="IU/L" />
-                <HormoneChip label="LH"  value={record.lh}  unit="IU/L" />
-                <HormoneChip label="AMH" value={record.amh} unit="ng/mL" />
-                <HormoneChip label="TSH" value={record.tsh} unit="mIU/L" />
-                <HormoneChip label="PRL" value={record.prl} unit="ng/mL" />
+                <HormoneChip label="FSH"        value={record.fsh}        unit="IU/L" />
+                <HormoneChip label="LH"         value={record.lh}         unit="IU/L" />
+                <HormoneChip label="TSH"        value={record.tsh}        unit="mIU/L" />
+                <HormoneChip label="PRL"        value={record.prl}        unit="ng/mL" />
+                <HormoneChip label="AMH"        value={record.amh}        unit="ng/mL" />
+                <HormoneChip label="HOMA Score" value={record.homa_score} unit="" />
               </div>
             </div>
           )}

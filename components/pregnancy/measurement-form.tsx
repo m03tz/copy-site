@@ -48,12 +48,12 @@ const measurementFormSchema = z.object({
   placenta: z.string().optional(),
   liquor: z.string().optional(),
   ua: z.string().optional(),
-  // Ultrasound fields
-  crl: z.string().optional().refine((v) => !v || +v > 0, 'Must be positive'),
-  bpd: z.string().optional().refine((v) => !v || +v > 0, 'Must be positive'),
-  fl:  z.string().optional().refine((v) => !v || +v > 0, 'Must be positive'),
-  ac:  z.string().optional().refine((v) => !v || +v > 0, 'Must be positive'),
-  efw: z.string().optional().refine((v) => !v || +v > 0, 'Must be positive'),
+  // Ultrasound fields — free text, no numeric validation
+  crl: z.string().optional(),
+  bpd: z.string().optional(),
+  fl:  z.string().optional(),
+  ac:  z.string().optional(),
+  efw: z.string().optional(),
   // Lab fields
   hb:      z.string().optional().refine((v) => !v || +v > 0, 'Must be positive'),
   plt:     z.string().optional().refine((v) => !v || +v > 0, 'Must be positive'),
@@ -332,6 +332,10 @@ export function MeasurementForm({ pregnancyId, lmpDate, latestVitals }: Measurem
                 <LabField label={t('measurements.hb')}        name="hb"           form={form} />
                 <LabField label="PLT"                          name="plt"          form={form} />
                 <LabField label={t('measurements.rbs')}        name="rbs"          form={form} />
+                <div className="space-y-1">
+                  <Label htmlFor="ua">UA</Label>
+                  <Input id="ua" type="text" placeholder="UA" {...form.register('ua')} />
+                </div>
                 <LabField label="OGTT Fasting (mg/dL)"         name="ogtt_fasting" form={form} />
                 <LabField label="OGTT 1hr (mg/dL)"             name="ogtt_1hr"     form={form} />
                 <LabField label="OGTT 2hr (mg/dL)"             name="ogtt_2hr"     form={form} />
@@ -341,9 +345,9 @@ export function MeasurementForm({ pregnancyId, lmpDate, latestVitals }: Measurem
             </div>
           </div>
 
-          {/* ── Plan ── */}
+          {/* ── Plan / Notes (bottom, blue) ── */}
           <div className="space-y-1 rounded-lg border border-blue-300 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 shadow-sm p-4">
-            <Label htmlFor="measurement_notes" className="text-blue-700 dark:text-blue-400 font-semibold">
+            <Label htmlFor="measurement_notes" className="text-blue-700 dark:text-blue-400 font-bold text-base">
               {t('measurements.notes')}
             </Label>
             <Textarea
@@ -388,7 +392,7 @@ function UltrasoundField({
   return (
     <div className="space-y-1">
       <Label htmlFor={name}>{label}</Label>
-      <Input id={name} type="number" step="0.01" min={0} placeholder="—" {...form.register(name)} />
+      <Input id={name} type="text" placeholder="—" {...form.register(name)} />
     </div>
   )
 }

@@ -180,15 +180,15 @@ export function MedicalReportForm({ patientName, activePregnancy, gravida, para 
   <title>${t('docTitle')}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Arial','Tahoma',sans-serif; direction: ${dir}; padding: 1.5cm 2cm; color: #111; min-height: 29.7cm; position: relative; }
+    body { font-family: Arial, sans-serif; direction: ${dir}; padding: 1.5cm 2cm; color: #111; min-height: 29.7cm; position: relative; font-size: 18px; }
     ${getClinicHeaderStyles()}
-    .report-meta { display:flex; justify-content:space-between; margin-bottom:24px; font-size:13px; color:#444; border-bottom:1px solid #e0e0e0; padding-bottom:10px; }
+    .report-meta { display:flex; justify-content:space-between; margin-bottom:24px; font-size:18px; color:#444; border-bottom:1px solid #e0e0e0; padding-bottom:10px; }
     .report-meta span { font-weight:bold; color:#111; }
-    .report-title { font-size:17px; font-weight:bold; text-align:center; margin-bottom:28px; text-decoration:underline; text-underline-offset:5px; }
-    .report-body { font-size:14px; line-height:2.2; white-space:pre-wrap; min-height:180px; border-bottom:1px dashed #ccc; padding-bottom:16px; }
+    .report-title { font-size:18px; font-weight:bold; text-align:center; margin-bottom:28px; text-decoration:underline; text-underline-offset:5px; }
+    .report-body { font-size:18px; line-height:2.2; white-space:pre-wrap; min-height:180px; border-bottom:1px dashed #ccc; padding-bottom:16px; }
     .stamp-area { position:absolute; bottom:2.5cm; left:2cm; width:140px; height:140px; }
     .stamp-area img { width:140px; height:140px; object-fit:contain; }
-    .signature-area { position:absolute; bottom:2.5cm; right:2cm; text-align:center; font-size:13px; }
+    .signature-area { position:absolute; bottom:2.5cm; right:2cm; text-align:center; font-size:18px; }
     .signature-line { border-top:1px solid #333; width:160px; margin:40px auto 6px; }
     @media print { body { padding:1cm 1.5cm; } @page { size:A4; margin:0; } }
   </style>

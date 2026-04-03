@@ -363,7 +363,7 @@ export async function updatePatientInfo(
  */
 export async function updatePatientMedicalHistory(
   patientId: string,
-  data: { pmh?: string; psh?: string; pdh?: string; parity?: string; gravida?: number | null; para?: number | null }
+  data: { pmh?: string; psh?: string; pdh?: string; parity?: string; married_for?: string; gravida?: number | null; para?: number | null }
 ): Promise<{ success?: boolean; error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -384,6 +384,7 @@ export async function updatePatientMedicalHistory(
     psh: data.psh ?? null,
     pdh: data.pdh ?? null,
     parity: data.parity ?? null,
+    married_for: data.married_for ?? null,
   }
   if ('gravida' in data) updatePayload.gravida = data.gravida ?? null
   if ('para' in data) updatePayload.para = data.para ?? null

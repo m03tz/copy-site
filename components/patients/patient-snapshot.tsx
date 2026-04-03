@@ -83,6 +83,7 @@ interface PatientData {
     psh?: string | null
     pdh?: string | null
     parity?: string | null
+    married_for?: string | null
     gravida?: number | null
     para?: number | null
   } | null
@@ -123,6 +124,7 @@ export function PatientSnapshot({ patient, visits, pregnancies, lastVisitDate: l
     pmh: patient.patients?.pmh ?? '',
     psh: patient.patients?.psh ?? '',
     parity: patient.patients?.parity ?? '',
+    married_for: patient.patients?.married_for ?? '',
   })
   const [noteLines, setNoteLines] = useState<NoteLine[]>(
     parseNoteLines(patient.patients?.pdh ?? '')
@@ -176,12 +178,13 @@ export function PatientSnapshot({ patient, visits, pregnancies, lastVisitDate: l
         psh: historyValues.psh || undefined,
         pdh: pdh || undefined,
         parity: historyValues.parity || undefined,
+        married_for: historyValues.married_for || undefined,
       })
       if (!result.error) setEditingHistory(false)
     })
   }
 
-  const hasHistory = historyValues.pmh || historyValues.psh || noteLines.length > 0 || historyValues.parity
+  const hasHistory = historyValues.pmh || historyValues.psh || noteLines.length > 0 || historyValues.parity || historyValues.married_for
 
   return (
     <div className="space-y-3">
@@ -284,7 +287,7 @@ export function PatientSnapshot({ patient, visits, pregnancies, lastVisitDate: l
               <div className="flex gap-1">
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
                   setEditingHistory(false)
-                  setHistoryValues({ pmh: patient.patients?.pmh ?? '', psh: patient.patients?.psh ?? '', parity: patient.patients?.parity ?? '' })
+                  setHistoryValues({ pmh: patient.patients?.pmh ?? '', psh: patient.patients?.psh ?? '', parity: patient.patients?.parity ?? '', married_for: patient.patients?.married_for ?? '' })
                   setNoteLines(parseNoteLines(patient.patients?.pdh ?? ''))
                 }}>
                   <X className="h-3 w-3" />
@@ -298,10 +301,11 @@ export function PatientSnapshot({ patient, visits, pregnancies, lastVisitDate: l
 
           {editingHistory ? (
             <div className="space-y-3">
-              <div className="grid gap-2 sm:grid-cols-3">
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 <HistoryEditField label="PMH" value={historyValues.pmh} placeholder="FREE / DM / HTN..." onChange={(v) => setHistoryValues((p) => ({ ...p, pmh: v }))} />
                 <HistoryEditField label="PSH" value={historyValues.psh} placeholder="FREE / CS / Appendix..." onChange={(v) => setHistoryValues((p) => ({ ...p, psh: v }))} />
                 <HistoryEditField label="Parity" value={historyValues.parity} placeholder="P0 / P1G2..." onChange={(v) => setHistoryValues((p) => ({ ...p, parity: v }))} />
+                <HistoryEditField label="Married for" value={historyValues.married_for} placeholder="e.g. 2 years..." onChange={(v) => setHistoryValues((p) => ({ ...p, married_for: v }))} />
               </div>
               {/* Note (PDH) — per-line with color toggle */}
               <div className="space-y-1.5">
@@ -356,6 +360,7 @@ export function PatientSnapshot({ patient, visits, pregnancies, lastVisitDate: l
                 {historyValues.pmh && <HistoryChip label="PMH" value={historyValues.pmh} />}
                 {historyValues.psh && <HistoryChip label="PSH" value={historyValues.psh} />}
                 {historyValues.parity && <HistoryChip label="Parity" value={historyValues.parity} />}
+                {historyValues.married_for && <HistoryChip label="Married for" value={historyValues.married_for} />}
               </div>
               {noteLines.length > 0 && (
                 <div className="flex flex-col gap-0.5">

@@ -85,7 +85,7 @@ export function PrescriptionPrint({
     if (win) {
       win.addEventListener('load', () => {
         URL.revokeObjectURL(url)
-        win.print()
+        setTimeout(() => win.print(), 500)
       }, { once: true })
     }
     setOpen(false)
@@ -190,7 +190,7 @@ function generatePrescriptionHtml(opts: {
   <title>وصفة طبية</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; color: #000; background: #fff; padding: 1.5cm 1cm; font-size: 18px; }
+    body { font-family: Arial, sans-serif; color: #000; background: #fff; padding: 1.5cm 1cm; font-size: 18px; text-align: ${opts.dir === 'rtl' ? 'right' : 'left'}; }
     @page { size: A4; margin: 0; }
     @media print { body { padding: 1.5cm 1cm; } }
     ${getClinicHeaderStyles()}

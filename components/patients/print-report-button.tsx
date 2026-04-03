@@ -207,8 +207,9 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
   <link rel="icon" type="image/png" href="${baseUrl}/images/site logo.png" />
   <style>
     ${generateStyles()}
-    body { direction: ${dir}; }
+    body { direction: ${dir}; text-align: ${textAlign}; }
     th { text-align: ${textAlign}; }
+    td { text-align: ${textAlign}; }
   </style>
 </head>
 <body>
@@ -344,7 +345,7 @@ export function PrintReportButton({ patientId }: PrintReportButtonProps) {
       win.document.write(html)
       win.document.close()
       win.focus()
-      setTimeout(() => win.print(), 300)
+      setTimeout(() => win.print(), 500)
     } catch (e) {
       console.error('Failed to generate report:', e)
     } finally {

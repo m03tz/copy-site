@@ -230,7 +230,7 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
   <title>${tmplLabel}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; direction: ${dir}; padding: 1.5cm 2cm; color: #111; min-height: 29.7cm; position: relative; font-size:18px; }
+    body { font-family: Arial, sans-serif; direction: ${dir}; text-align: right; padding: 1.5cm 2cm; color: #111; min-height: 29.7cm; position: relative; font-size:18px; }
     ${getClinicHeaderStyles()}
     .report-meta { display:flex; justify-content:space-between; margin-bottom:24px; font-size:18px; color:#444; border-bottom:1px solid #e0e0e0; padding-bottom:10px; }
     .report-meta span { font-weight:bold; color:#111; }
@@ -269,7 +269,7 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
 </html>`
 
     const win = window.open('', '_blank')
-    if (win) { win.document.write(html); win.document.close(); win.print() }
+    if (win) { win.document.write(html); win.document.close(); setTimeout(() => win.print(), 500) }
   }
 
   // ─── Render ────────────────────────────────────────────────────────────────
@@ -356,7 +356,7 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
                         type="text"
                         value={row[field]}
                         onChange={(e) => updateIvfRow(i, field, e.target.value)}
-                        className="w-full bg-transparent text-center text-xs outline-none focus:bg-background rounded px-1"
+                        className="w-full text-center text-xs rounded border border-transparent focus:border-border focus:bg-background px-1 outline-none"
                         dir="auto"
                       />
                     </td>

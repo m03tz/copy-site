@@ -31,7 +31,7 @@ type FormState = {
   error?: string | Record<string, string[]>
 } | null
 
-const SLOT_DURATIONS = [1, 15, 20, 30, 45, 60]
+const SLOT_DURATIONS = [1, 5, 10, 15, 20, 30, 45, 60]
 
 export function ScheduleForm({ existingDays, onSuccess, defaultValues }: ScheduleFormProps) {
   const t = useTranslations('schedule')

@@ -22,7 +22,7 @@ const upsertScheduleSchema = z
     slot_duration_minutes: z.coerce
       .number()
       .int()
-      .min(10, 'Slot duration must be at least 10 minutes')
+      .min(1, 'Slot duration must be at least 1 minute')
       .max(120, 'Slot duration must be at most 120 minutes')
       .default(30),
   })

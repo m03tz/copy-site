@@ -475,6 +475,11 @@ function ExternalCostDialog({
           onChange={(v) => setForm((f) => ({ ...f, patient_id: v }))}
           placeholder={t('selectPatient')}
         />
+        {form.patient_id && (() => {
+          const p = patients.find((x) => x.id === form.patient_id)
+          const name = p?.full_name_ar || p?.full_name_en
+          return name ? <p className="text-sm font-medium text-foreground">{name}</p> : null
+        })()}
       </div>
 
       {/* Date */}

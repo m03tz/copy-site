@@ -136,14 +136,14 @@ function MeasurementCard({
       {error && <p className="text-xs text-destructive">{error}</p>}
 
       {/* Vital signs — Row 1: Weight + Blood Pressure */}
-      <div className="grid grid-cols-2 gap-2 text-xs">
+      <div className="grid grid-cols-2 gap-2 text-sm">
         <DataChip label={t('measurements.weightKg')}     value={m.weight_kg != null ? `${m.weight_kg} ${t('measurements.weightUnit')}` : null} />
         <DataChip label={t('measurements.bloodPressure')} value={m.blood_pressure} />
       </div>
 
       {/* Obstetric findings — Row 2: FH + Placenta + Liquor on one line */}
       {(m.fh || m.placenta || m.liquor) && (
-        <div className="grid grid-cols-3 gap-2 text-xs">
+        <div className="grid grid-cols-3 gap-2 text-sm">
           <DataChip label={t('measurements.fh')}      value={m.fh      ?? null} />
           <DataChip label={t('measurements.placenta')} value={m.placenta ?? null} />
           <DataChip label={t('measurements.liquor')}   value={m.liquor  ?? null} />
@@ -155,10 +155,10 @@ function MeasurementCard({
         <div className="grid gap-3 sm:grid-cols-2">
           {hasUltrasound && (
             <div className="rounded-lg border shadow-sm p-3 space-y-1.5 bg-muted/20">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 {t('measurements.ultrasoundSection')}
               </p>
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="grid grid-cols-2 gap-2 text-sm">
                 <DataChip label="CRL" value={m.crl != null ? `${m.crl} mm` : null} />
                 <DataChip label="BPD" value={m.bpd != null ? `${m.bpd} mm` : null} />
                 <DataChip label="FL"  value={m.fl  != null ? `${m.fl} mm`  : null} />
@@ -170,10 +170,10 @@ function MeasurementCard({
 
           {hasLab && (
             <div className="rounded-lg border shadow-sm p-3 space-y-1.5 bg-muted/20">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 {t('measurements.labSection')}
               </p>
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="grid grid-cols-2 gap-2 text-sm">
                 <DataChip label="HB (g/dL)"           value={m.hb           != null ? fmt(m.hb)           : null} />
                 <DataChip label="PLT"                 value={m.plt          != null ? fmt(m.plt)          : null} />
                 <DataChip label="RBS (mg/dL)"         value={m.rbs          != null ? fmt(m.rbs)          : null} />
@@ -192,8 +192,8 @@ function MeasurementCard({
       {/* Plan — blue square */}
       {m.notes && (
         <div className="rounded-lg border border-blue-300 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 shadow-sm px-3 py-2">
-          <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-1">{t('measurements.notes')}</p>
-          <p className="text-xs text-blue-900 dark:text-blue-200">{m.notes}</p>
+          <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-1">{t('measurements.notes')}</p>
+          <p className="text-sm text-blue-900 dark:text-blue-200">{m.notes}</p>
         </div>
       )}
 
@@ -447,8 +447,8 @@ function DataChip({ label, value }: { label: string; value: string | null | unde
   if (!value) return null
   return (
     <div className="rounded-md border bg-muted/30 shadow-sm px-2 py-1">
-      <p className="text-[10px] text-muted-foreground">{label}</p>
-      <p className="font-medium">{value}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-sm font-medium">{value}</p>
     </div>
   )
 }

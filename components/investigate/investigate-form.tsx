@@ -50,8 +50,8 @@ function buildDefaultIvfRows(): IvfRow[] {
 
 // ─── Default checkbox items per template ─────────────────────────────────────
 
-const HP_ITEMS = ['FSH', 'LH', 'TSH', 'PROLACTINE', 'AMH']
-const INVESTIGATION_ITEMS = ['CBC', 'Urine analysis', 'RBS', 'BLOOD GROUP']
+const HP_ITEMS = ['FSH', 'LH', 'TSH', 'PROLACTINE', 'AMH', 'HOMA SCORE']
+const INVESTIGATION_ITEMS = ['CBC', 'Urine analysis', 'RBS', 'BLOOD GROUP', 'OGTT 75mg (2 readings)']
 const THROMBOPHILA_ITEMS = [
   'Antithrombin (previously called Antithrombin III)',
   'Protein C',
@@ -253,7 +253,7 @@ export function InvestigateForm({ patientName }: InvestigateFormProps) {
 <body>
   ${getClinicHeaderHtml()}
   <div class="report-meta">
-    <div>${AR.printName}: <span>${patientName}</span></div>
+    <div>${AR.printName}: <span>${selected === 'sfa' ? 'الزوج' : patientName}</span></div>
     <div>${AR.printDate}: <span>${today}</span></div>
   </div>
   <div class="report-title">${tmplLabel}</div>

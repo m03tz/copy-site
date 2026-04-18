@@ -531,9 +531,9 @@ function HormoneChip({ label, value, unit }: { label: string; value: number | nu
   if (!value) return null
   return (
     <div className="rounded-md border bg-muted/30 px-2 py-1.5 text-center">
-      <p className="text-[10px] text-muted-foreground">{label}</p>
-      <p className="text-sm font-semibold">{value}</p>
-      <p className="text-[10px] text-muted-foreground">{unit}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-base font-semibold">{value}</p>
+      <p className="text-xs text-muted-foreground">{unit}</p>
     </div>
   )
 }

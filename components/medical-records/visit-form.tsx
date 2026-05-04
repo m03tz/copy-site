@@ -38,6 +38,8 @@ interface VisitFormProps {
     appointment_id?: string | null
   }
   lastVisitDate?: string | null
+  /** When false the visit-type (ANC/GYNE) field becomes optional. Default: true */
+  requireNotes?: boolean
   onSuccess?: () => void
   onCancel?: () => void
 }
@@ -46,6 +48,7 @@ export function VisitForm({
   patientId,
   existingRecord,
   lastVisitDate,
+  requireNotes = true,
   onSuccess,
   onCancel,
 }: VisitFormProps) {
@@ -63,13 +66,13 @@ export function VisitForm({
   function handleSubmit(formData: FormData) {
     setError(null)
 
-    if (!visitNote) {
+    if (requireNotes && !visitNote) {
       setError(t('form.notesRequired'))
       return
     }
 
     // Inject notes (ANC/GYNE) from controlled Select
-    formData.set('notes', visitNote)
+    if (visitNote) formData.set('notes', visitNote)
 
     startTransition(async () => {
       let result: { success?: boolean; error?: string }
@@ -115,17 +118,20 @@ export function VisitForm({
       <div className="space-y-2">
         <Label className="text-base font-semibold">{t('form.vitalSigns')}</Label>
         <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <Label htmlFor="vital_signs_blood_pressure" className="text-xs">
-              {t('form.bloodPressure')}
-            </Label>
-            <Input
-              id="vital_signs_blood_pressure"
-              name="vital_signs_blood_pressure"
-              placeholder="120/80"
-              defaultValue={existingVitalSigns?.blood_pressure ?? ''}
-            />
-          </div>
+          {/* Blood pressure only for ANC visits, not GYNE */}
+          {visitNote !== 'GYNE' && (
+            <div className="space-y-1">
+              <Label htmlFor="vital_signs_blood_pressure" className="text-xs">
+                {t('form.bloodPressure')}
+              </Label>
+              <Input
+                id="vital_signs_blood_pressure"
+                name="vital_signs_blood_pressure"
+                placeholder="120/80"
+                defaultValue={existingVitalSigns?.blood_pressure ?? ''}
+              />
+            </div>
+          )}
           <div className="space-y-1">
             <Label htmlFor="vital_signs_weight" className="text-xs">
               {t('form.weight')}
@@ -164,7 +170,13 @@ export function VisitForm({
 
       {/* Notes — visit type: ANC (red) or GYNE (green) */}
       <div className="space-y-1">
-        <Label htmlFor="notes">{t('form.notes')} <span className="text-destructive">*</span></Label>
+        <Label htmlFor="notes">
+          {t('form.notes')}{' '}
+          {requireNotes
+            ? <span className="text-destructive">*</span>
+            : <span className="text-muted-foreground text-xs">(اختياري)</span>
+          }
+        </Label>
         <Select value={visitNote} onValueChange={setVisitNote}>
           <SelectTrigger id="notes">
             <SelectValue placeholder={t('form.notes')} />

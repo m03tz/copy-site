@@ -29,6 +29,7 @@ import {
 import { addMeasurement } from '@/lib/actions/pregnancies'
 import { Plus, Activity, FlaskConical } from 'lucide-react'
 import { format } from 'date-fns'
+import { useRouter } from 'next/navigation'
 
 // ─── Validation schema ────────────────────────────────────────────────────────
 
@@ -85,6 +86,7 @@ interface MeasurementFormProps {
 
 export function MeasurementForm({ pregnancyId, lmpDate, latestVitals }: MeasurementFormProps) {
   const t = useTranslations('pregnancy')
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [serverError, setServerError] = useState<string | null>(null)
@@ -160,6 +162,7 @@ export function MeasurementForm({ pregnancyId, lmpDate, latestVitals }: Measurem
       } else {
         form.reset(defaultValues)
         setOpen(false)
+        router.refresh()
       }
     })
   }

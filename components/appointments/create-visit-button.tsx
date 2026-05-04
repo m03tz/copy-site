@@ -66,6 +66,7 @@ export function CreateVisitButton({
           </DialogHeader>
           <VisitForm
             patientId={patientId}
+            requireNotes={false}
             onSuccess={handleSuccess}
             onCancel={() => setOpen(false)}
           />

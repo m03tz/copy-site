@@ -6,7 +6,8 @@ import {
   LayoutDashboard, Users, Calendar, ClipboardList,
   Scissors, Clock, DollarSign, LogOut, LucideIcon,
 } from 'lucide-react'
-import { Link } from '@/i18n/routing'
+import { Link, usePathname } from '@/i18n/routing'
+import { useRouter } from 'next/navigation'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { LanguageToggle } from '@/components/language-toggle'
 import { Button } from '@/components/ui/button'
@@ -39,6 +40,34 @@ const ICON_MAP: Record<string, LucideIcon> = {
 function getIcon(href: string): LucideIcon {
   const segment = href.split('/').pop() ?? ''
   return ICON_MAP[segment] ?? LayoutDashboard
+}
+
+/** Navigates normally, but if already on the page it refreshes instead. */
+function NavLink({
+  href,
+  className,
+  children,
+}: {
+  href: string
+  className?: string
+  children: React.ReactNode
+}) {
+  const pathname = usePathname()
+  const router = useRouter()
+  const isActive = pathname === href || pathname.startsWith(href + '/')
+
+  function handleClick(e: React.MouseEvent) {
+    if (isActive) {
+      e.preventDefault()
+      router.refresh()
+    }
+  }
+
+  return (
+    <Link href={href} className={className} onClick={handleClick}>
+      {children}
+    </Link>
+  )
 }
 
 export function CollapsibleSidebar({
@@ -80,12 +109,12 @@ export function CollapsibleSidebar({
               return (
                 <Tooltip key={item.href}>
                   <TooltipTrigger asChild>
-                    <Link
+                    <NavLink
                       href={item.href}
                       className="flex h-10 w-10 items-center justify-center rounded-md text-sky-300 hover:bg-white/10 hover:text-white transition-colors"
                     >
                       <Icon className="h-5 w-5" />
-                    </Link>
+                    </NavLink>
                   </TooltipTrigger>
                   <TooltipContent side={isRtl ? 'left' : 'right'}>
                     {item.label}
@@ -128,14 +157,14 @@ export function CollapsibleSidebar({
               {navItems.map((item) => {
                 const Icon = getIcon(item.href)
                 return (
-                  <Link
+                  <NavLink
                     key={item.href}
                     href={item.href}
                     className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sky-100 hover:bg-white/10 hover:text-white transition-colors"
                   >
                     <Icon className="h-4 w-4 shrink-0 text-sky-300" />
                     {item.label}
-                  </Link>
+                  </NavLink>
                 )
               })}
             </nav>

@@ -284,7 +284,7 @@ export function VisitCard({ visit, patientId, canPrescribe = true, canEndVisit, 
                 {t('card.vitalSigns')}
               </p>
               <div className="flex flex-wrap gap-2">
-                {vitalSigns.blood_pressure && (
+                {vitalSigns.blood_pressure && visit.notes !== 'GYNE' && (
                   <Badge variant="outline" className="text-xs">
                     {t('form.bloodPressure')}: {vitalSigns.blood_pressure}
                   </Badge>

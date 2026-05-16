@@ -118,20 +118,18 @@ export function VisitForm({
       <div className="space-y-2">
         <Label className="text-base font-semibold">{t('form.vitalSigns')}</Label>
         <div className="grid grid-cols-2 gap-3">
-          {/* Blood pressure only for ANC visits, not GYNE */}
-          {visitNote !== 'GYNE' && (
-            <div className="space-y-1">
-              <Label htmlFor="vital_signs_blood_pressure" className="text-xs">
-                {t('form.bloodPressure')}
-              </Label>
-              <Input
-                id="vital_signs_blood_pressure"
-                name="vital_signs_blood_pressure"
-                placeholder="120/80"
-                defaultValue={existingVitalSigns?.blood_pressure ?? ''}
-              />
-            </div>
-          )}
+          {/* BP always collected in the form; display in card is filtered by visit type */}
+          <div className="space-y-1">
+            <Label htmlFor="vital_signs_blood_pressure" className="text-xs">
+              {t('form.bloodPressure')}
+            </Label>
+            <Input
+              id="vital_signs_blood_pressure"
+              name="vital_signs_blood_pressure"
+              placeholder="120/80"
+              defaultValue={existingVitalSigns?.blood_pressure ?? ''}
+            />
+          </div>
           <div className="space-y-1">
             <Label htmlFor="vital_signs_weight" className="text-xs">
               {t('form.weight')}

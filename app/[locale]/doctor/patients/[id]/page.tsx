@@ -153,9 +153,13 @@ export default async function DoctorPatientProfilePage({ params }: DoctorPatient
     .single() as { data: { visit_date: string } | null }
   const lastVisitDate = lastVisitRow?.visit_date ?? null
 
-  // Extract latest vital signs to pre-fill pregnancy measurement form
-  const latestVitals = visits[0]?.vital_signs
-    ? (visits[0].vital_signs as { blood_pressure?: string; weight?: string })
+  // Extract latest vital signs (most recent visit with a blood pressure reading)
+  const vitalsVisit = [...visits].reverse().find(v => {
+    const vs = v.vital_signs as { blood_pressure?: string } | null
+    return vs?.blood_pressure
+  })
+  const latestVitals = vitalsVisit?.vital_signs
+    ? (vitalsVisit.vital_signs as { blood_pressure?: string; weight?: string })
     : null
 
   // Sort measurements by measured_at descending

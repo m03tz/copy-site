@@ -82,9 +82,11 @@ interface MeasurementFormProps {
   pregnancyId: string
   lmpDate?: string
   latestVitals?: LatestVitals | null
+  /** Last blood pressure recorded in ANC measurements — shown as a reference badge */
+  lastBP?: string | null
 }
 
-export function MeasurementForm({ pregnancyId, lmpDate, latestVitals }: MeasurementFormProps) {
+export function MeasurementForm({ pregnancyId, lmpDate, latestVitals, lastBP }: MeasurementFormProps) {
   const t = useTranslations('pregnancy')
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -238,6 +240,11 @@ export function MeasurementForm({ pregnancyId, lmpDate, latestVitals }: Measurem
               </div>
               <div className="space-y-1">
                 <Label htmlFor="blood_pressure">{t('measurements.bloodPressure')}</Label>
+                {lastBP && (
+                  <p className="text-[11px] text-muted-foreground">
+                    آخر قياس: <span className="font-semibold text-foreground">{lastBP}</span>
+                  </p>
+                )}
                 <Input id="blood_pressure" type="text" placeholder="120/80"
                   {...form.register('blood_pressure')} />
               </div>

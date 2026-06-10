@@ -210,6 +210,7 @@ export function PregnancyCard({ pregnancy, latestVitals }: PregnancyCardProps) {
               pregnancyId={pregnancy.id}
               lmpDate={pregnancy.lmp_date}
               latestVitals={latestVitals}
+              lastBP={pregnancy.pregnancy_measurements.find(m => m.blood_pressure)?.blood_pressure ?? null}
             />
 
             {/* Edit pregnancy button */}

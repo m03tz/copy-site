@@ -165,14 +165,27 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
     </table>`
   }
 
+  // Infer the visit type per visit: explicit notes value, or by date match with measurement/infertility records
+  function getVisitType(v: typeof visits[number]): 'ANC' | 'GYNE' | null {
+    if (v.notes === 'ANC' || v.notes === 'GYNE') return v.notes
+    if (allMeasurements.some(m => m.measured_at === v.visit_date)) return 'ANC'
+    if (infertilityRecords.some(r => r.record_date === v.visit_date)) return 'GYNE'
+    return null
+  }
+
   const visitRows = visits
     .map((v) => {
-      const visitType = v.notes || '\u2014'
-      const typeColor = v.notes === 'ANC' ? '#c62828' : v.notes === 'GYNE' ? '#2e7d32' : '#666'
+      const type = getVisitType(v)
+      const typeLabel = type === 'ANC'
+        ? (isAr ? '\u0631\u0639\u0627\u064a\u0629 \u062d\u0645\u0644' : 'Antenatal Care')
+        : type === 'GYNE'
+          ? (isAr ? '\u0646\u0633\u0627\u0621' : 'Gynecology')
+          : '\u2014'
+      const typeColor = type === 'ANC' ? '#c62828' : type === 'GYNE' ? '#2e7d32' : '#666'
       return `
     <tr>
       <td>${v.visit_date}</td>
-      <td><span style="color:${typeColor};font-weight:700">${visitType}</span></td>
+      <td><span style="color:${typeColor};font-weight:700">${typeLabel}</span></td>
       <td>${v.chief_complaint || '\u2014'}</td>
       <td>${v.diagnosis || '\u2014'}</td>
       <td>${v.treatment_plan || '\u2014'}</td>
@@ -187,7 +200,9 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
       const vs = v.vital_signs as Record<string, string> | null
       const rows: { label: string; value: string }[] = []
 
-      if (v.notes === 'ANC') {
+      const type = getVisitType(v)
+
+      if (type === 'ANC') {
         // Match the pregnancy measurement recorded on the same date
         const m = allMeasurements.find(x => x.measured_at === v.visit_date)
         if (m) {
@@ -225,7 +240,7 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
         }
       }
 
-      if (v.notes === 'GYNE') {
+      if (type === 'GYNE') {
         if (vs?.blood_pressure) rows.push({ label: isAr ? '\u0636\u063a\u0637 \u0627\u0644\u062f\u0645' : 'Blood Pressure', value: vs.blood_pressure })
         if (vs?.weight) rows.push({ label: isAr ? '\u0627\u0644\u0648\u0632\u0646 (kg)' : 'Weight (kg)', value: vs.weight })
         if (vs?.pulse) rows.push({ label: isAr ? '\u0627\u0644\u0646\u0628\u0636' : 'Pulse', value: vs.pulse })
@@ -255,7 +270,7 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
         }
       }
 
-      return buildMeasurementTable(v.visit_date, v.notes ?? '', rows)
+      return buildMeasurementTable(v.visit_date, type ?? '', rows)
     })
     .filter(Boolean)
     .join('')

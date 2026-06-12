@@ -136,65 +136,36 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
   // Use the patient_code from DB if available
   const patientCode = patient.patient_code ?? '\u2014'
 
+  // Helper: build a 2-column key/value table for measurements of one visit
+  function buildMeasurementTable(visitDate: string, visitType: string, rows: { label: string; value: string }[]): string {
+    if (rows.length === 0) return ''
+    const headerColor = visitType === 'ANC' ? '#c62828' : visitType === 'GYNE' ? '#2e7d32' : '#0d7377'
+    const typeLabel = visitType === 'ANC'
+      ? (isAr ? '\u0631\u0639\u0627\u064a\u0629 \u062d\u0645\u0644' : 'Antenatal Care')
+      : visitType === 'GYNE'
+        ? (isAr ? '\u0646\u0633\u0627\u0621' : 'Gynecology')
+        : visitType
+    const tableTitle = `${visitDate} \u2014 ${typeLabel}`
+    const body = rows.map((r, i) => `
+      <tr style="background:${i % 2 === 0 ? '#fff' : '#f7f7f7'}">
+        <td style="width:35%;font-weight:600;color:#444">${r.label}</td>
+        <td>${r.value}</td>
+      </tr>`).join('')
+    return `
+    <table style="margin-top:14px;margin-bottom:8px">
+      <thead>
+        <tr style="background:${headerColor};color:#fff">
+          <th colspan="2" style="text-align:${textAlign};font-size:16px;padding:8px 12px">${tableTitle}</th>
+        </tr>
+      </thead>
+      <tbody>${body}</tbody>
+    </table>`
+  }
+
   const visitRows = visits
     .map((v) => {
       const visitType = v.notes || '\u2014'
       const typeColor = v.notes === 'ANC' ? '#c62828' : v.notes === 'GYNE' ? '#2e7d32' : '#666'
-      const vs = v.vital_signs as Record<string, string> | null
-
-      let detailRow = ''
-
-      if (v.notes === 'ANC' && vs) {
-        const parts: string[] = []
-        if (vs.blood_pressure) parts.push(`${isAr ? '\u0636\u063a\u0637 \u0627\u0644\u062f\u0645' : 'BP'}: ${vs.blood_pressure}`)
-        if (vs.weight) parts.push(`${isAr ? '\u0627\u0644\u0648\u0632\u0646' : 'Weight'}: ${vs.weight}`)
-        if (vs.pulse) parts.push(`${isAr ? '\u0627\u0644\u0646\u0628\u0636' : 'Pulse'}: ${vs.pulse}`)
-        if (vs.temperature) parts.push(`${isAr ? '\u0627\u0644\u062d\u0631\u0627\u0631\u0629' : 'Temp'}: ${vs.temperature}`)
-        if (parts.length > 0) {
-          detailRow = `<tr><td colspan="6" style="padding:4px 12px;background:#fff3f3;font-size:15px;color:#555">${parts.join(' &nbsp;|&nbsp; ')}</td></tr>`
-        }
-      }
-
-      if (v.notes === 'GYNE') {
-        const matched = infertilityRecords.find(r => r.record_date === v.visit_date)
-        if (matched) {
-          const parts: string[] = []
-          if (matched.complaint) parts.push(`${isAr ? '\u0627\u0644\u0634\u0643\u0648\u0649' : 'C/O'}: ${matched.complaint}`)
-          if (matched.us_findings) parts.push(`${isAr ? '\u0627\u0644\u062a\u0635\u0648\u064a\u0631' : 'US'}: ${matched.us_findings}`)
-          if (matched.plan) parts.push(`${isAr ? '\u0627\u0644\u062e\u0637\u0629' : 'Plan'}: ${matched.plan}`)
-          // Hormones
-          const hormones: string[] = []
-          if (matched.fsh != null) hormones.push(`FSH: ${matched.fsh}`)
-          if (matched.lh != null) hormones.push(`LH: ${matched.lh}`)
-          if (matched.tsh != null) hormones.push(`TSH: ${matched.tsh}`)
-          if (matched.prl != null) hormones.push(`PRL: ${matched.prl}`)
-          if (matched.amh != null) hormones.push(`AMH: ${matched.amh}`)
-          if (matched.homa_score != null) hormones.push(`HOMA: ${matched.homa_score}`)
-          if (hormones.length > 0) parts.push(`${isAr ? '\u0647\u0631\u0645\u0648\u0646\u0627\u062a' : 'Hormones'}: ${hormones.join(', ')}`)
-          if (matched.hsg_result) parts.push(`HSG: ${matched.hsg_result}`)
-          // SFA
-          const sfa: string[] = []
-          if (matched.sfa_count != null) sfa.push(`Count: ${matched.sfa_count}`)
-          if (matched.sfa_motility != null) sfa.push(`Motility: ${matched.sfa_motility}%`)
-          if (matched.sfa_morphology != null) sfa.push(`Morphology: ${matched.sfa_morphology}%`)
-          if (matched.sfa_viscosity) sfa.push(`Viscosity: ${matched.sfa_viscosity}`)
-          if (sfa.length > 0) parts.push(`SFA: ${sfa.join(', ')}`)
-          if (parts.length > 0) {
-            detailRow = `<tr><td colspan="6" style="padding:4px 12px;background:#f0fff0;font-size:15px;color:#555">${parts.join(' &nbsp;|&nbsp; ')}</td></tr>`
-          }
-        }
-        // Also show vital signs if present
-        if (vs) {
-          const vsParts: string[] = []
-          if (vs.blood_pressure) vsParts.push(`${isAr ? '\u0636\u063a\u0637 \u0627\u0644\u062f\u0645' : 'BP'}: ${vs.blood_pressure}`)
-          if (vs.weight) vsParts.push(`${isAr ? '\u0627\u0644\u0648\u0632\u0646' : 'Weight'}: ${vs.weight}`)
-          if (vs.pulse) vsParts.push(`${isAr ? '\u0627\u0644\u0646\u0628\u0636' : 'Pulse'}: ${vs.pulse}`)
-          if (vsParts.length > 0) {
-            detailRow += `<tr><td colspan="6" style="padding:4px 12px;background:#f5f5f5;font-size:15px;color:#555">${vsParts.join(' &nbsp;|&nbsp; ')}</td></tr>`
-          }
-        }
-      }
-
       return `
     <tr>
       <td>${v.visit_date}</td>
@@ -203,8 +174,56 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
       <td>${v.diagnosis || '\u2014'}</td>
       <td>${v.treatment_plan || '\u2014'}</td>
       <td>${v.notes || '\u2014'}</td>
-    </tr>${detailRow}`
+    </tr>`
     })
+    .join('')
+
+  // Build a per-visit measurements table (ANC: vital signs, GYNE: infertility record + vital signs)
+  const measurementTables = visits
+    .map((v) => {
+      const vs = v.vital_signs as Record<string, string> | null
+      const rows: { label: string; value: string }[] = []
+
+      if (v.notes === 'ANC' && vs) {
+        if (vs.blood_pressure) rows.push({ label: isAr ? '\u0636\u063a\u0637 \u0627\u0644\u062f\u0645' : 'Blood Pressure', value: vs.blood_pressure })
+        if (vs.weight) rows.push({ label: isAr ? '\u0627\u0644\u0648\u0632\u0646 (kg)' : 'Weight (kg)', value: vs.weight })
+        if (vs.pulse) rows.push({ label: isAr ? '\u0627\u0644\u0646\u0628\u0636' : 'Pulse', value: vs.pulse })
+        if (vs.temperature) rows.push({ label: isAr ? '\u0627\u0644\u062d\u0631\u0627\u0631\u0629' : 'Temperature', value: vs.temperature })
+      }
+
+      if (v.notes === 'GYNE') {
+        if (vs?.blood_pressure) rows.push({ label: isAr ? '\u0636\u063a\u0637 \u0627\u0644\u062f\u0645' : 'Blood Pressure', value: vs.blood_pressure })
+        if (vs?.weight) rows.push({ label: isAr ? '\u0627\u0644\u0648\u0632\u0646 (kg)' : 'Weight (kg)', value: vs.weight })
+        if (vs?.pulse) rows.push({ label: isAr ? '\u0627\u0644\u0646\u0628\u0636' : 'Pulse', value: vs.pulse })
+        if (vs?.temperature) rows.push({ label: isAr ? '\u0627\u0644\u062d\u0631\u0627\u0631\u0629' : 'Temperature', value: vs.temperature })
+
+        const matched = infertilityRecords.find(r => r.record_date === v.visit_date)
+        if (matched) {
+          if (matched.lmp_date) rows.push({ label: isAr ? '\u0622\u062e\u0631 \u062f\u0648\u0631\u0629 (LMP)' : 'Last Period (LMP)', value: matched.lmp_date })
+          if (matched.complaint) rows.push({ label: isAr ? '\u0627\u0644\u0634\u0643\u0648\u0649' : 'Chief Complaint (C/O)', value: matched.complaint })
+          if (matched.us_findings) rows.push({ label: isAr ? '\u0646\u062a\u0627\u0626\u062c \u0627\u0644\u062a\u0635\u0648\u064a\u0631 (US)' : 'Ultrasound Findings (US)', value: matched.us_findings })
+          if (matched.plan) rows.push({ label: isAr ? '\u062e\u0637\u0629 \u0627\u0644\u0639\u0644\u0627\u062c' : 'Treatment Plan', value: matched.plan })
+          // Hormone panel
+          if (matched.fsh != null) rows.push({ label: 'FSH (IU/L)', value: String(matched.fsh) })
+          if (matched.lh != null) rows.push({ label: 'LH (IU/L)', value: String(matched.lh) })
+          if (matched.tsh != null) rows.push({ label: 'TSH (mIU/L)', value: String(matched.tsh) })
+          if (matched.prl != null) rows.push({ label: 'PRL (ng/mL)', value: String(matched.prl) })
+          if (matched.amh != null) rows.push({ label: 'AMH (ng/mL)', value: String(matched.amh) })
+          if (matched.homa_score != null) rows.push({ label: 'HOMA Score', value: String(matched.homa_score) })
+          // HSG
+          if (matched.hsg_result) rows.push({ label: 'HSG Result', value: matched.hsg_result })
+          // SFA
+          if (matched.sfa_count != null) rows.push({ label: 'SFA Count (\u00d710\u2076/mL)', value: String(matched.sfa_count) })
+          if (matched.sfa_motility != null) rows.push({ label: 'SFA Motility %', value: String(matched.sfa_motility) })
+          if (matched.sfa_morphology != null) rows.push({ label: 'SFA Morphology %', value: String(matched.sfa_morphology) })
+          if (matched.sfa_viscosity) rows.push({ label: 'SFA Viscosity', value: matched.sfa_viscosity })
+          if (matched.notes) rows.push({ label: isAr ? '\u0645\u0644\u0627\u062d\u0638\u0627\u062a \u0625\u0636\u0627\u0641\u064a\u0629' : 'Additional Notes', value: matched.notes })
+        }
+      }
+
+      return buildMeasurementTable(v.visit_date, v.notes ?? '', rows)
+    })
+    .filter(Boolean)
     .join('')
 
   const pregnancyRows = pregnancies
@@ -316,6 +335,7 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
       </thead>
       <tbody>${visitRows}</tbody>
     </table>
+    ${measurementTables}
   </div>`
       : ''
   }

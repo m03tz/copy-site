@@ -173,15 +173,73 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
     return null
   }
 
-  const visitRows = visits
+  // Merge visits with synthetic visits derived from measurements / infertility records
+  // that don't have a matching medical_record on the same date. This way the print
+  // shows every measurement date in Medical Records, not just those with a saved visit.
+  type VisitEntry = {
+    visit_date: string
+    chief_complaint: string | null
+    diagnosis: string | null
+    treatment_plan: string | null
+    vital_signs: Record<string, string> | null
+    notes: string | null
+    type: 'ANC' | 'GYNE' | null
+    synthetic: boolean
+  }
+
+  const visitDates = new Set(visits.map(v => v.visit_date))
+  const orphanMeasurementDates = [...new Set(
+    allMeasurements
+      .map(m => m.measured_at)
+      .filter(d => !visitDates.has(d))
+  )]
+  const orphanInfertilityDates = [...new Set(
+    infertilityRecords
+      .map(r => r.record_date)
+      .filter(d => !visitDates.has(d))
+  )]
+
+  const entries: VisitEntry[] = [
+    ...visits.map((v): VisitEntry => ({
+      visit_date: v.visit_date,
+      chief_complaint: v.chief_complaint,
+      diagnosis: v.diagnosis,
+      treatment_plan: v.treatment_plan,
+      vital_signs: v.vital_signs,
+      notes: v.notes,
+      type: getVisitType(v),
+      synthetic: false,
+    })),
+    ...orphanMeasurementDates.map((d): VisitEntry => ({
+      visit_date: d,
+      chief_complaint: null,
+      diagnosis: null,
+      treatment_plan: null,
+      vital_signs: null,
+      notes: null,
+      type: 'ANC',
+      synthetic: true,
+    })),
+    ...orphanInfertilityDates.map((d): VisitEntry => ({
+      visit_date: d,
+      chief_complaint: null,
+      diagnosis: null,
+      treatment_plan: null,
+      vital_signs: null,
+      notes: null,
+      type: 'GYNE',
+      synthetic: true,
+    })),
+  ].sort((a, b) => b.visit_date.localeCompare(a.visit_date))
+
+  const visitRows = entries
     .map((v) => {
-      const type = getVisitType(v)
-      const typeLabel = type === 'ANC'
+      const typeLabel = v.type === 'ANC'
         ? (isAr ? '\u0631\u0639\u0627\u064a\u0629 \u062d\u0645\u0644' : 'Antenatal Care')
-        : type === 'GYNE'
+        : v.type === 'GYNE'
           ? (isAr ? '\u0646\u0633\u0627\u0621' : 'Gynecology')
           : '\u2014'
-      const typeColor = type === 'ANC' ? '#c62828' : type === 'GYNE' ? '#2e7d32' : '#666'
+      const typeColor = v.type === 'ANC' ? '#c62828' : v.type === 'GYNE' ? '#2e7d32' : '#666'
       return `
     <tr>
       <td>${v.visit_date}</td>
@@ -195,12 +253,12 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
     .join('')
 
   // Build a per-visit measurements table (ANC: vital signs, GYNE: infertility record + vital signs)
-  const measurementTables = visits
+  const measurementTables = entries
     .map((v) => {
-      const vs = v.vital_signs as Record<string, string> | null
+      const vs = v.vital_signs
       const rows: { label: string; value: string }[] = []
 
-      const type = getVisitType(v)
+      const type = v.type
 
       if (type === 'ANC') {
         // Match the pregnancy measurement recorded on the same date
@@ -368,9 +426,9 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
   </div>
 
   ${
-    visits.length > 0
+    entries.length > 0
       ? `<div class="section">
-    <h2>${l.medicalRecords} (${visits.length} ${l.visit})</h2>
+    <h2>${l.medicalRecords} (${entries.length} ${l.visit})</h2>
     <table>
       <thead>
         <tr>

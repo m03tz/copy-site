@@ -414,12 +414,8 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
     <h2>${l.patientInfo}</h2>
     <div class="info-grid">
       <div class="info-item"><span class="label">${l.name}:</span><span class="value">${patient.full_name_ar}</span></div>
-      ${patient.full_name_en ? `<div class="info-item"><span class="label">${l.nameEn}:</span><span class="value">${patient.full_name_en}</span></div>` : ''}
-      <div class="info-item"><span class="label">${l.phone}:</span><span class="value" dir="ltr">${patient.phone}</span></div>
       <div class="info-item"><span class="label">${isAr ? '\u0631\u0642\u0645 \u0627\u0644\u0645\u0644\u0641' : 'File No'}:</span><span class="value" dir="ltr" style="font-family:monospace;font-weight:700">${patientCode}</span></div>
-      ${patient.date_of_birth ? `<div class="info-item"><span class="label">${l.dob}:</span><span class="value">${patient.date_of_birth}</span></div>` : ''}
       ${patient.blood_type ? `<div class="info-item"><span class="label">${l.bloodType}:</span><span class="value">${patient.blood_type}</span></div>` : ''}
-      ${patient.national_id ? `<div class="info-item"><span class="label">${l.nationalId}:</span><span class="value">${patient.national_id}</span></div>` : ''}
       ${patient.emergency_contact_name ? `<div class="info-item"><span class="label">${l.emergency}:</span><span class="value">${patient.emergency_contact_name} - ${patient.emergency_contact_phone || ''}</span></div>` : ''}
       ${patient.notes ? `<div class="info-item" style="grid-column:1/-1"><span class="label">${l.notes}:</span><span class="value">${patient.notes}</span></div>` : ''}
     </div>

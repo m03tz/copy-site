@@ -17,6 +17,43 @@ const createInvoiceSchema = z.object({
   items: z.array(invoiceItemSchema).min(1, 'At least one item is required'),
 })
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * Supabase caps a single SELECT at 1000 rows by default. When looking up
+ * many patient IDs across a wide date range we must chunk the .in() call
+ * so no profile/patient row gets silently dropped (which would render as
+ * "مريضة محذوفة" in financial/visitors reports).
+ */
+const LOOKUP_CHUNK = 500
+
+type ProfileRow = { id: string; full_name_ar: string; phone: string | null }
+type PatientRow = { id: string; national_id: string | null; patient_code: string | null }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchProfilesInChunks(supabase: any, ids: string[]): Promise<ProfileRow[]> {
+  if (ids.length === 0) return []
+  const out: ProfileRow[] = []
+  for (let i = 0; i < ids.length; i += LOOKUP_CHUNK) {
+    const slice = ids.slice(i, i + LOOKUP_CHUNK)
+    const { data } = await supabase.from('profiles').select('id, full_name_ar, phone').in('id', slice) as { data: ProfileRow[] | null }
+    if (data) out.push(...data)
+  }
+  return out
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchPatientsInChunks(supabase: any, ids: string[]): Promise<PatientRow[]> {
+  if (ids.length === 0) return []
+  const out: PatientRow[] = []
+  for (let i = 0; i < ids.length; i += LOOKUP_CHUNK) {
+    const slice = ids.slice(i, i + LOOKUP_CHUNK)
+    const { data } = await supabase.from('patients').select('id, national_id, patient_code').in('id', slice) as { data: PatientRow[] | null }
+    if (data) out.push(...data)
+  }
+  return out
+}
+
 // ─── Actions ─────────────────────────────────────────────────────────────────
 
 /**
@@ -391,16 +428,18 @@ export async function getFinancialRecords(fromDate: string, toDate: string): Pro
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Unauthorized' }
 
+  // Use .range() to bypass Supabase's default 1000-row cap on each SELECT
+  const MAX_ROWS = 50000
   const [visitsRes, extRes, opRes] = await Promise.all([
-    supabase.from('medical_records').select('id, patient_id, visit_date, visit_fee, visit_type').eq('is_ended', true).not('visit_fee', 'is', null).gte('visit_date', fromDate).lte('visit_date', toDate).order('visit_date', { ascending: true }) as unknown as Promise<{
+    supabase.from('medical_records').select('id, patient_id, visit_date, visit_fee, visit_type').eq('is_ended', true).not('visit_fee', 'is', null).gte('visit_date', fromDate).lte('visit_date', toDate).order('visit_date', { ascending: true }).range(0, MAX_ROWS) as unknown as Promise<{
       data: { id: string; patient_id: string | null; visit_date: string; visit_fee: number | null; visit_type: string | null }[] | null
       error: { message: string } | null
     }>,
-    supabase.from('external_costs').select('id, patient_id, cost_date, amount, visit_type').gte('cost_date', fromDate).lte('cost_date', toDate).order('cost_date', { ascending: true }) as unknown as Promise<{
+    supabase.from('external_costs').select('id, patient_id, cost_date, amount, visit_type').gte('cost_date', fromDate).lte('cost_date', toDate).order('cost_date', { ascending: true }).range(0, MAX_ROWS) as unknown as Promise<{
       data: { id: string; patient_id: string | null; cost_date: string; amount: number; visit_type: string }[] | null
       error: { message: string } | null
     }>,
-    supabase.from('operations').select('id, patient_id, completed_date, completion_amount, operation_type').eq('is_completed', true).not('completion_amount', 'is', null).gte('completed_date', fromDate).lte('completed_date', toDate).order('completed_date', { ascending: true }) as unknown as Promise<{
+    supabase.from('operations').select('id, patient_id, completed_date, completion_amount, operation_type').eq('is_completed', true).not('completion_amount', 'is', null).gte('completed_date', fromDate).lte('completed_date', toDate).order('completed_date', { ascending: true }).range(0, MAX_ROWS) as unknown as Promise<{
       data: { id: string; patient_id: string | null; completed_date: string; completion_amount: number; operation_type: string }[] | null
       error: { message: string } | null
     }>,
@@ -421,13 +460,13 @@ export async function getFinancialRecords(fromDate: string, toDate: string): Pro
     ...opData.map((r) => r.patient_id).filter(Boolean),
   ])] as string[]
 
-  const [profilesRes, patientsRes] = await Promise.all([
-    allPatientIds.length > 0 ? supabase.from('profiles').select('id, full_name_ar, phone').in('id', allPatientIds) : Promise.resolve({ data: [] }),
-    allPatientIds.length > 0 ? supabase.from('patients').select('id, national_id, patient_code').in('id', allPatientIds) : Promise.resolve({ data: [] }),
+  const [profilesData, patientsData] = await Promise.all([
+    fetchProfilesInChunks(supabase, allPatientIds),
+    fetchPatientsInChunks(supabase, allPatientIds),
   ])
 
-  const profileMap = new Map<string, { id: string; full_name_ar: string; phone: string | null }>((profilesRes.data ?? []).map((p: { id: string; full_name_ar: string; phone: string | null }) => [p.id, p] as [string, { id: string; full_name_ar: string; phone: string | null }]))
-  const patientMap = new Map<string, { id: string; national_id: string | null; patient_code: string | null }>((patientsRes.data ?? []).map((p: { id: string; national_id: string | null; patient_code: string | null }) => [p.id, p] as [string, { id: string; national_id: string | null; patient_code: string | null }]))
+  const profileMap = new Map<string, { id: string; full_name_ar: string; phone: string | null }>(profilesData.map((p) => [p.id, p]))
+  const patientMap = new Map<string, { id: string; national_id: string | null; patient_code: string | null }>(patientsData.map((p) => [p.id, p]))
 
   const DELETED = 'مريضة محذوفة'
 
@@ -506,7 +545,8 @@ export async function getVisitorsByDateRange(fromDate: string, toDate: string): 
     .or('deleted_at.is.null,visit_fee.not.is.null')
     .gte('visit_date', fromDate)
     .lte('visit_date', toDate)
-    .order('visit_date', { ascending: true }) as {
+    .order('visit_date', { ascending: true })
+    .range(0, 50000) as {
       data: { id: string; patient_id: string | null; visit_date: string; visit_fee: number | null; visit_type: string | null }[] | null
       error: { message: string } | null
     }
@@ -516,13 +556,13 @@ export async function getVisitorsByDateRange(fromDate: string, toDate: string): 
 
   const patientIds = [...new Set(data.map((r) => r.patient_id).filter(Boolean))] as string[]
 
-  const [profilesRes, patientsRes] = await Promise.all([
-    patientIds.length > 0 ? supabase.from('profiles').select('id, full_name_ar, phone').in('id', patientIds) : Promise.resolve({ data: [] }),
-    patientIds.length > 0 ? supabase.from('patients').select('id, national_id, patient_code').in('id', patientIds) : Promise.resolve({ data: [] }),
+  const [profilesData, patientsData] = await Promise.all([
+    fetchProfilesInChunks(supabase, patientIds),
+    fetchPatientsInChunks(supabase, patientIds),
   ])
 
-  const profileMap = new Map((profilesRes.data ?? []).map((p: { id: string; full_name_ar: string; phone: string | null }) => [p.id, p]))
-  const patientMap = new Map((patientsRes.data ?? []).map((p: { id: string; national_id: string | null; patient_code: string | null }) => [p.id, p]))
+  const profileMap = new Map(profilesData.map((p) => [p.id, p]))
+  const patientMap = new Map(patientsData.map((p) => [p.id, p]))
 
   const DELETED = 'مريضة محذوفة'
   const records = data.map((rec) => ({

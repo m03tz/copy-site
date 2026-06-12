@@ -35,6 +35,19 @@ export interface PatientReportData {
     lmp_date: string
     expected_due_date: string
     notes: string | null
+    pregnancy_measurements: {
+      measured_at: string
+      gestational_week: number | null
+      weight_kg: number | null
+      blood_pressure: string | null
+      fh: string | null
+      placenta: string | null
+      liquor: string | null
+      ua: string | null
+      hb: number | null
+      rbs: number | null
+      notes: string | null
+    }[]
   }[]
 }
 
@@ -110,7 +123,7 @@ export async function getPatientReportData(
 
     supabase
       .from('pregnancies')
-      .select('status, lmp_date, expected_due_date, notes')
+      .select('status, lmp_date, expected_due_date, notes, pregnancy_measurements(measured_at, gestational_week, weight_kg, blood_pressure, fh, placenta, liquor, ua, hb, rbs, notes)')
       .eq('patient_id', patientId)
       .order('created_at', { ascending: false }) as unknown as Promise<{
         data: {
@@ -118,6 +131,19 @@ export async function getPatientReportData(
           lmp_date: string
           expected_due_date: string
           notes: string | null
+          pregnancy_measurements: {
+            measured_at: string
+            gestational_week: number | null
+            weight_kg: number | null
+            blood_pressure: string | null
+            fh: string | null
+            placenta: string | null
+            liquor: string | null
+            ua: string | null
+            hb: number | null
+            rbs: number | null
+            notes: string | null
+          }[]
         }[] | null
         error: unknown
       }>,

@@ -78,7 +78,7 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
     snapshot: '\u0645\u0644\u062e\u0635 \u0633\u0631\u064a\u0639',
     age: '\u0627\u0644\u0639\u0645\u0631',
     years: '\u0633\u0646\u0629',
-    pregnanciesCount: '\u0639\u062f\u062f \u0627\u0644\u062d\u0645\u0644\u0627\u062a',
+    pregnanciesCount: '\u0639\u062f\u062f \u0627\u0644\u0627\u062d\u0645\u0627\u0644',
     currentMeds: '\u0627\u0644\u0623\u062f\u0648\u064a\u0629 \u0627\u0644\u062d\u0627\u0644\u064a\u0629',
     noMeds: '\u0644\u0627 \u062a\u0648\u062c\u062f \u0623\u062f\u0648\u064a\u0629 \u062d\u0627\u0644\u064a\u0629',
     medName: '\u0627\u0644\u062f\u0648\u0627\u0621',
@@ -151,16 +151,6 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
   // Use the patient_code from DB if available
   const patientCode = patient.patient_code ?? '\u2014'
 
-  // Collect current medications from the most recent visits' prescriptions
-  const allMeds: { medication_name: string; dosage: string; duration: string; instructions: string | null }[] = []
-  for (const v of visits) {
-    for (const p of v.prescriptions) {
-      allMeds.push(p)
-    }
-  }
-  // Show the most recent prescriptions (up to 10)
-  const recentMeds = allMeds.slice(0, 10)
-
   const visitRows = visits
     .map(
       (v) => `
@@ -170,33 +160,49 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
       <td>${v.diagnosis || '\u2014'}</td>
       <td>${v.treatment_plan || '\u2014'}</td>
       <td>${v.notes || '\u2014'}</td>
-    </tr>
-    ${
-      v.prescriptions.length > 0
-        ? `<tr><td colspan="5" style="padding:4px 12px;background:#f0f7ff;">
-            <strong>${l.prescriptions}:</strong>
-            ${v.prescriptions
-              .map(
-                (p) =>
-                  `${p.medication_name} - ${p.dosage} - ${p.duration}${p.instructions ? ` (${p.instructions})` : ''}`
-              )
-              .join(' | ')}
-          </td></tr>`
-        : ''
-    }`
+    </tr>`
     )
     .join('')
 
   const pregnancyRows = pregnancies
-    .map(
-      (p) => `
-    <tr>
-      <td>${p.status === 'active' ? l.statusActive : p.status === 'completed' ? l.statusCompleted : p.status}</td>
-      <td>${p.lmp_date}</td>
-      <td>${p.expected_due_date}</td>
-      <td>${p.notes || '\u2014'}</td>
-    </tr>`
-    )
+    .map((p) => {
+      const statusLabel = p.status === 'active' ? l.statusActive : p.status === 'completed' ? l.statusCompleted : p.status
+      const measurements = [...(p.pregnancy_measurements ?? [])].sort(
+        (a, b) => a.measured_at.localeCompare(b.measured_at)
+      )
+      const measurementRows = measurements.map((m, i) => `
+        <tr style="background:${i % 2 === 0 ? '#fff' : '#f4f7ff'}">
+          <td>${m.measured_at}</td>
+          <td style="text-align:center">${m.gestational_week ?? '\u2014'}</td>
+          <td style="text-align:center">${m.weight_kg ?? '\u2014'}</td>
+          <td style="text-align:center">${m.blood_pressure ?? '\u2014'}</td>
+          <td style="text-align:center">${m.fh ?? '\u2014'}</td>
+          <td style="text-align:center">${m.placenta ?? '\u2014'}</td>
+          <td style="text-align:center">${m.liquor ?? '\u2014'}</td>
+          <td style="text-align:center">${m.hb ?? '\u2014'}</td>
+          <td style="text-align:center">${m.rbs ?? '\u2014'}</td>
+          <td>${m.notes ?? '\u2014'}</td>
+        </tr>`).join('')
+
+      return `
+      <tr style="background:#e8f5e9;font-weight:700">
+        <td colspan="10">${statusLabel} &nbsp;|&nbsp; LMP: ${p.lmp_date} &nbsp;|&nbsp; EDD: ${p.expected_due_date}${p.notes ? ` &nbsp;|&nbsp; ${p.notes}` : ''}</td>
+      </tr>
+      ${measurements.length > 0 ? `
+      <tr style="background:#0d7377;color:#fff;font-size:15px">
+        <th>${isAr ? '\u0627\u0644\u062a\u0627\u0631\u064a\u062e' : 'Date'}</th>
+        <th style="text-align:center">${isAr ? '\u0627\u0644\u0623\u0633\u0628\u0648\u0639' : 'Week'}</th>
+        <th style="text-align:center">${isAr ? '\u0627\u0644\u0648\u0632\u0646' : 'Wt (kg)'}</th>
+        <th style="text-align:center">${isAr ? '\u0636\u063a\u0637 \u0627\u0644\u062f\u0645' : 'BP'}</th>
+        <th style="text-align:center">${isAr ? '\u0646\u0628\u0636\u0627\u062a \u0627\u0644\u062c\u0646\u064a\u0646' : 'FH'}</th>
+        <th style="text-align:center">${isAr ? '\u0627\u0644\u0645\u0634\u064a\u0645\u0629' : 'Placenta'}</th>
+        <th style="text-align:center">${isAr ? '\u0627\u0644\u0633\u0627\u0626\u0644' : 'Liquor'}</th>
+        <th style="text-align:center">HB</th>
+        <th style="text-align:center">RBS</th>
+        <th>${isAr ? '\u0645\u0644\u0627\u062d\u0638\u0627\u062a' : 'Notes'}</th>
+      </tr>
+      ${measurementRows}` : `<tr><td colspan="10" style="color:#888;padding:6px 12px">${isAr ? '\u0644\u0627 \u062a\u0648\u062c\u062f \u0642\u064a\u0627\u0633\u0627\u062a' : 'No measurements'}</td></tr>`}`
+    })
     .join('')
 
   return `<!DOCTYPE html>
@@ -250,31 +256,6 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
     </div>
   </div>
 
-  <!-- Current Medications -->
-  <div class="section">
-    <h2>${l.currentMeds}</h2>
-    ${recentMeds.length > 0 ? `
-    <table>
-      <thead>
-        <tr>
-          <th>${l.medName}</th>
-          <th>${l.dosage}</th>
-          <th>${l.duration}</th>
-          <th>${l.instructions}</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${recentMeds.map(m => `
-        <tr>
-          <td>${m.medication_name}</td>
-          <td>${m.dosage}</td>
-          <td>${m.duration}</td>
-          <td>${m.instructions || '\u2014'}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>` : `<p style="color:#888;font-size:13px;">${l.noMeds}</p>`}
-  </div>
-
   ${
     visits.length > 0
       ? `<div class="section">
@@ -300,14 +281,6 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
       ? `<div class="section">
     <h2>${l.pregnancyRecord}</h2>
     <table>
-      <thead>
-        <tr>
-          <th>${l.status}</th>
-          <th>${l.lmp}</th>
-          <th>${l.dueDate}</th>
-          <th>${l.notes}</th>
-        </tr>
-      </thead>
       <tbody>${pregnancyRows}</tbody>
     </table>
   </div>`

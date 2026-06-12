@@ -33,9 +33,6 @@ export function generateStyles(): string {
     .snapshot-card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; text-align: center; }
     .snapshot-card .snap-label { font-size: 18px; color: #666; margin-bottom: 4px; }
     .snapshot-card .snap-value { font-size: 18px; font-weight: 700; color: #0d7377; }
-    .medications-list { margin-top: 8px; }
-    .medications-list .med-item { padding: 6px 12px; border-bottom: 1px solid #eee; font-size: 18px; display: flex; justify-content: space-between; }
-    .medications-list .med-item:last-child { border-bottom: none; }
     table { width: 100%; border-collapse: collapse; font-size: 18px; margin-top: 8px; }
     th { background: #0d7377; color: #fff; padding: 8px 12px; }
     td { padding: 8px 12px; border-bottom: 1px solid #eee; }
@@ -60,7 +57,7 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
   const dir = isAr ? 'rtl' : 'ltr'
   const langAttr = isAr ? 'ar' : 'en'
   const textAlign = isAr ? 'right' : 'left'
-  const patientName = patient.full_name_ar
+  const patientName = isAr ? patient.full_name_ar : (patient.full_name_en || patient.full_name_ar)
 
   // Labels
   const l = isAr ? {
@@ -79,12 +76,6 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
     age: '\u0627\u0644\u0639\u0645\u0631',
     years: '\u0633\u0646\u0629',
     pregnanciesCount: '\u0639\u062f\u062f \u0627\u0644\u0627\u062d\u0645\u0627\u0644',
-    currentMeds: '\u0627\u0644\u0623\u062f\u0648\u064a\u0629 \u0627\u0644\u062d\u0627\u0644\u064a\u0629',
-    noMeds: '\u0644\u0627 \u062a\u0648\u062c\u062f \u0623\u062f\u0648\u064a\u0629 \u062d\u0627\u0644\u064a\u0629',
-    medName: '\u0627\u0644\u062f\u0648\u0627\u0621',
-    dosage: '\u0627\u0644\u062c\u0631\u0639\u0629',
-    duration: '\u0627\u0644\u0645\u062f\u0629',
-    instructions: '\u0627\u0644\u062a\u0639\u0644\u064a\u0645\u0627\u062a',
     medicalRecords: '\u0627\u0644\u0633\u062c\u0644\u0627\u062a \u0627\u0644\u0637\u0628\u064a\u0629',
     visit: '\u0632\u064a\u0627\u0631\u0629',
     date: '\u0627\u0644\u062a\u0627\u0631\u064a\u062e',
@@ -116,12 +107,6 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
     age: 'Age',
     years: 'years',
     pregnanciesCount: 'Pregnancies',
-    currentMeds: 'Current Medications',
-    noMeds: 'No current medications',
-    medName: 'Medication',
-    dosage: 'Dosage',
-    duration: 'Duration',
-    instructions: 'Instructions',
     medicalRecords: 'Medical Records',
     visit: 'visit',
     date: 'Date',

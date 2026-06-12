@@ -30,6 +30,25 @@ export interface PatientReportData {
       instructions: string | null
     }[]
   }[]
+  infertilityRecords: {
+    record_date: string
+    complaint: string | null
+    us_findings: string | null
+    plan: string | null
+    lmp_date: string | null
+    fsh: number | null
+    lh: number | null
+    amh: number | null
+    tsh: number | null
+    prl: number | null
+    homa_score: number | null
+    hsg_result: string | null
+    sfa_count: number | null
+    sfa_motility: number | null
+    sfa_morphology: number | null
+    sfa_viscosity: string | null
+    notes: string | null
+  }[]
   pregnancies: {
     status: string
     lmp_date: string
@@ -75,7 +94,7 @@ export async function getPatientReportData(
     return { error: 'Unauthorized' }
   }
 
-  const [profileResult, visitsResult, pregnanciesResult] = await Promise.all([
+  const [profileResult, visitsResult, pregnanciesResult, infertilityResult] = await Promise.all([
     supabase
       .from('profiles')
       .select('*, patients(*)')
@@ -147,6 +166,33 @@ export async function getPatientReportData(
         }[] | null
         error: unknown
       }>,
+
+    supabase
+      .from('infertility_records')
+      .select('record_date, complaint, us_findings, plan, lmp_date, fsh, lh, amh, tsh, prl, homa_score, hsg_result, sfa_count, sfa_motility, sfa_morphology, sfa_viscosity, notes')
+      .eq('patient_id', patientId)
+      .order('record_date', { ascending: false }) as unknown as Promise<{
+        data: {
+          record_date: string
+          complaint: string | null
+          us_findings: string | null
+          plan: string | null
+          lmp_date: string | null
+          fsh: number | null
+          lh: number | null
+          amh: number | null
+          tsh: number | null
+          prl: number | null
+          homa_score: number | null
+          hsg_result: string | null
+          sfa_count: number | null
+          sfa_motility: number | null
+          sfa_morphology: number | null
+          sfa_viscosity: string | null
+          notes: string | null
+        }[] | null
+        error: unknown
+      }>,
   ])
 
   if (!profileResult.data) return { error: 'Patient not found' }
@@ -171,6 +217,7 @@ export async function getPatientReportData(
         notes: patientRecord?.notes ?? null,
       },
       visits: visitsResult.data ?? [],
+      infertilityRecords: infertilityResult.data ?? [],
       pregnancies: pregnanciesResult.data ?? [],
     },
   }

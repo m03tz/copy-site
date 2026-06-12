@@ -51,7 +51,7 @@ export function generateStyles(): string {
 // ─── Report HTML generator (Arabic) ────────────────────────────────────────
 
 function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl: string = ''): string {
-  const { patient, visits, pregnancies } = data
+  const { patient, visits, pregnancies, infertilityRecords } = data
   const isAr = lang === 'ar'
 
   const dir = isAr ? 'rtl' : 'ltr'
@@ -137,16 +137,74 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
   const patientCode = patient.patient_code ?? '\u2014'
 
   const visitRows = visits
-    .map(
-      (v) => `
+    .map((v) => {
+      const visitType = v.notes || '\u2014'
+      const typeColor = v.notes === 'ANC' ? '#c62828' : v.notes === 'GYNE' ? '#2e7d32' : '#666'
+      const vs = v.vital_signs as Record<string, string> | null
+
+      let detailRow = ''
+
+      if (v.notes === 'ANC' && vs) {
+        const parts: string[] = []
+        if (vs.blood_pressure) parts.push(`${isAr ? '\u0636\u063a\u0637 \u0627\u0644\u062f\u0645' : 'BP'}: ${vs.blood_pressure}`)
+        if (vs.weight) parts.push(`${isAr ? '\u0627\u0644\u0648\u0632\u0646' : 'Weight'}: ${vs.weight}`)
+        if (vs.pulse) parts.push(`${isAr ? '\u0627\u0644\u0646\u0628\u0636' : 'Pulse'}: ${vs.pulse}`)
+        if (vs.temperature) parts.push(`${isAr ? '\u0627\u0644\u062d\u0631\u0627\u0631\u0629' : 'Temp'}: ${vs.temperature}`)
+        if (parts.length > 0) {
+          detailRow = `<tr><td colspan="6" style="padding:4px 12px;background:#fff3f3;font-size:15px;color:#555">${parts.join(' &nbsp;|&nbsp; ')}</td></tr>`
+        }
+      }
+
+      if (v.notes === 'GYNE') {
+        const matched = infertilityRecords.find(r => r.record_date === v.visit_date)
+        if (matched) {
+          const parts: string[] = []
+          if (matched.complaint) parts.push(`${isAr ? '\u0627\u0644\u0634\u0643\u0648\u0649' : 'C/O'}: ${matched.complaint}`)
+          if (matched.us_findings) parts.push(`${isAr ? '\u0627\u0644\u062a\u0635\u0648\u064a\u0631' : 'US'}: ${matched.us_findings}`)
+          if (matched.plan) parts.push(`${isAr ? '\u0627\u0644\u062e\u0637\u0629' : 'Plan'}: ${matched.plan}`)
+          // Hormones
+          const hormones: string[] = []
+          if (matched.fsh != null) hormones.push(`FSH: ${matched.fsh}`)
+          if (matched.lh != null) hormones.push(`LH: ${matched.lh}`)
+          if (matched.tsh != null) hormones.push(`TSH: ${matched.tsh}`)
+          if (matched.prl != null) hormones.push(`PRL: ${matched.prl}`)
+          if (matched.amh != null) hormones.push(`AMH: ${matched.amh}`)
+          if (matched.homa_score != null) hormones.push(`HOMA: ${matched.homa_score}`)
+          if (hormones.length > 0) parts.push(`${isAr ? '\u0647\u0631\u0645\u0648\u0646\u0627\u062a' : 'Hormones'}: ${hormones.join(', ')}`)
+          if (matched.hsg_result) parts.push(`HSG: ${matched.hsg_result}`)
+          // SFA
+          const sfa: string[] = []
+          if (matched.sfa_count != null) sfa.push(`Count: ${matched.sfa_count}`)
+          if (matched.sfa_motility != null) sfa.push(`Motility: ${matched.sfa_motility}%`)
+          if (matched.sfa_morphology != null) sfa.push(`Morphology: ${matched.sfa_morphology}%`)
+          if (matched.sfa_viscosity) sfa.push(`Viscosity: ${matched.sfa_viscosity}`)
+          if (sfa.length > 0) parts.push(`SFA: ${sfa.join(', ')}`)
+          if (parts.length > 0) {
+            detailRow = `<tr><td colspan="6" style="padding:4px 12px;background:#f0fff0;font-size:15px;color:#555">${parts.join(' &nbsp;|&nbsp; ')}</td></tr>`
+          }
+        }
+        // Also show vital signs if present
+        if (vs) {
+          const vsParts: string[] = []
+          if (vs.blood_pressure) vsParts.push(`${isAr ? '\u0636\u063a\u0637 \u0627\u0644\u062f\u0645' : 'BP'}: ${vs.blood_pressure}`)
+          if (vs.weight) vsParts.push(`${isAr ? '\u0627\u0644\u0648\u0632\u0646' : 'Weight'}: ${vs.weight}`)
+          if (vs.pulse) vsParts.push(`${isAr ? '\u0627\u0644\u0646\u0628\u0636' : 'Pulse'}: ${vs.pulse}`)
+          if (vsParts.length > 0) {
+            detailRow += `<tr><td colspan="6" style="padding:4px 12px;background:#f5f5f5;font-size:15px;color:#555">${vsParts.join(' &nbsp;|&nbsp; ')}</td></tr>`
+          }
+        }
+      }
+
+      return `
     <tr>
       <td>${v.visit_date}</td>
+      <td><span style="color:${typeColor};font-weight:700">${visitType}</span></td>
       <td>${v.chief_complaint || '\u2014'}</td>
       <td>${v.diagnosis || '\u2014'}</td>
       <td>${v.treatment_plan || '\u2014'}</td>
       <td>${v.notes || '\u2014'}</td>
-    </tr>`
-    )
+    </tr>${detailRow}`
+    })
     .join('')
 
   const pregnancyRows = pregnancies
@@ -249,6 +307,7 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
       <thead>
         <tr>
           <th>${l.date}</th>
+          <th>${isAr ? 'النوع' : 'Type'}</th>
           <th>${l.complaint}</th>
           <th>${l.diagnosis}</th>
           <th>${l.treatmentPlan}</th>

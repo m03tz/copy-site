@@ -52,6 +52,9 @@ export function generateStyles(): string {
 
 function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl: string = ''): string {
   const { patient, visits, pregnancies, infertilityRecords } = data
+
+  // Flatten all pregnancy measurements across pregnancies so we can match by date
+  const allMeasurements = pregnancies.flatMap(p => p.pregnancy_measurements ?? [])
   const isAr = lang === 'ar'
 
   const dir = isAr ? 'rtl' : 'ltr'
@@ -184,11 +187,42 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
       const vs = v.vital_signs as Record<string, string> | null
       const rows: { label: string; value: string }[] = []
 
-      if (v.notes === 'ANC' && vs) {
-        if (vs.blood_pressure) rows.push({ label: isAr ? '\u0636\u063a\u0637 \u0627\u0644\u062f\u0645' : 'Blood Pressure', value: vs.blood_pressure })
-        if (vs.weight) rows.push({ label: isAr ? '\u0627\u0644\u0648\u0632\u0646 (kg)' : 'Weight (kg)', value: vs.weight })
-        if (vs.pulse) rows.push({ label: isAr ? '\u0627\u0644\u0646\u0628\u0636' : 'Pulse', value: vs.pulse })
-        if (vs.temperature) rows.push({ label: isAr ? '\u0627\u0644\u062d\u0631\u0627\u0631\u0629' : 'Temperature', value: vs.temperature })
+      if (v.notes === 'ANC') {
+        // Match the pregnancy measurement recorded on the same date
+        const m = allMeasurements.find(x => x.measured_at === v.visit_date)
+        if (m) {
+          if (m.gestational_week != null) rows.push({ label: isAr ? '\u0627\u0644\u0623\u0633\u0628\u0648\u0639' : 'Gestational Week', value: String(m.gestational_week) })
+          if (m.weight_kg != null) rows.push({ label: isAr ? '\u0627\u0644\u0648\u0632\u0646 (kg)' : 'Weight (kg)', value: String(m.weight_kg) })
+          if (m.blood_pressure) rows.push({ label: isAr ? '\u0636\u063a\u0637 \u0627\u0644\u062f\u0645' : 'Blood Pressure', value: m.blood_pressure })
+          // Obstetric findings
+          if (m.fh) rows.push({ label: isAr ? '\u0646\u0628\u0636\u0627\u062a \u0627\u0644\u062c\u0646\u064a\u0646' : 'Fetal Heart', value: m.fh })
+          if (m.placenta) rows.push({ label: isAr ? '\u0627\u0644\u0645\u0634\u064a\u0645\u0629' : 'Placenta', value: m.placenta })
+          if (m.liquor) rows.push({ label: isAr ? '\u0627\u0644\u0633\u0627\u0626\u0644 \u0627\u0644\u0623\u0645\u0646\u064a\u0648\u0633\u064a' : 'Amniotic Fluid (Liquor)', value: m.liquor })
+          // Ultrasound
+          if (m.crl) rows.push({ label: 'CRL (mm)', value: m.crl })
+          if (m.bpd) rows.push({ label: 'BPD (mm)', value: m.bpd })
+          if (m.fl) rows.push({ label: 'FL (mm)', value: m.fl })
+          if (m.ac) rows.push({ label: 'AC (mm)', value: m.ac })
+          if (m.efw) rows.push({ label: 'EFW (g)', value: m.efw })
+          // Lab tests
+          if (m.hb != null) rows.push({ label: 'HB (g/dL)', value: String(m.hb) })
+          if (m.plt != null) rows.push({ label: 'PLT', value: String(m.plt) })
+          if (m.rbs != null) rows.push({ label: 'RBS (mg/dL)', value: String(m.rbs) })
+          if (m.ua) rows.push({ label: 'UA', value: m.ua })
+          if (m.ogtt_fasting != null) rows.push({ label: 'OGTT Fasting (mg/dL)', value: String(m.ogtt_fasting) })
+          if (m.ogtt_1hr != null) rows.push({ label: 'OGTT 1hr (mg/dL)', value: String(m.ogtt_1hr) })
+          if (m.ogtt_2hr != null) rows.push({ label: 'OGTT 2hr (mg/dL)', value: String(m.ogtt_2hr) })
+          if (m.tsh_lab != null) rows.push({ label: 'TSH (mIU/L)', value: String(m.tsh_lab) })
+          if (m.b_hcg != null) rows.push({ label: '\u03b2-HCG (mIU/mL)', value: String(m.b_hcg) })
+          if (m.notes) rows.push({ label: isAr ? '\u0645\u0644\u0627\u062d\u0638\u0627\u062a' : 'Notes', value: m.notes })
+        }
+        // Fallback: visit's vital signs (in case secretary recorded BP/weight before ANC dialog was filled)
+        if (rows.length === 0 && vs) {
+          if (vs.blood_pressure) rows.push({ label: isAr ? '\u0636\u063a\u0637 \u0627\u0644\u062f\u0645' : 'Blood Pressure', value: vs.blood_pressure })
+          if (vs.weight) rows.push({ label: isAr ? '\u0627\u0644\u0648\u0632\u0646 (kg)' : 'Weight (kg)', value: vs.weight })
+          if (vs.pulse) rows.push({ label: isAr ? '\u0627\u0644\u0646\u0628\u0636' : 'Pulse', value: vs.pulse })
+          if (vs.temperature) rows.push({ label: isAr ? '\u0627\u0644\u062d\u0631\u0627\u0631\u0629' : 'Temperature', value: vs.temperature })
+        }
       }
 
       if (v.notes === 'GYNE') {

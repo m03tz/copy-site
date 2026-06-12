@@ -54,20 +54,33 @@ export interface PatientReportData {
     lmp_date: string
     expected_due_date: string
     notes: string | null
-    pregnancy_measurements: {
-      measured_at: string
-      gestational_week: number | null
-      weight_kg: number | null
-      blood_pressure: string | null
-      fh: string | null
-      placenta: string | null
-      liquor: string | null
-      ua: string | null
-      hb: number | null
-      rbs: number | null
-      notes: string | null
-    }[]
+    pregnancy_measurements: PregnancyMeasurementRow[]
   }[]
+}
+
+export interface PregnancyMeasurementRow {
+  measured_at: string
+  gestational_week: number | null
+  weight_kg: number | null
+  blood_pressure: string | null
+  fh: string | null
+  placenta: string | null
+  liquor: string | null
+  ua: string | null
+  crl: string | null
+  bpd: string | null
+  fl: string | null
+  ac: string | null
+  efw: string | null
+  hb: number | null
+  plt: number | null
+  rbs: number | null
+  tsh_lab: number | null
+  ogtt_fasting: number | null
+  ogtt_1hr: number | null
+  ogtt_2hr: number | null
+  b_hcg: number | null
+  notes: string | null
 }
 
 /**
@@ -142,7 +155,7 @@ export async function getPatientReportData(
 
     supabase
       .from('pregnancies')
-      .select('status, lmp_date, expected_due_date, notes, pregnancy_measurements(measured_at, gestational_week, weight_kg, blood_pressure, fh, placenta, liquor, ua, hb, rbs, notes)')
+      .select('status, lmp_date, expected_due_date, notes, pregnancy_measurements(measured_at, gestational_week, weight_kg, blood_pressure, fh, placenta, liquor, ua, crl, bpd, fl, ac, efw, hb, plt, rbs, tsh_lab, ogtt_fasting, ogtt_1hr, ogtt_2hr, b_hcg, notes)')
       .eq('patient_id', patientId)
       .order('created_at', { ascending: false }) as unknown as Promise<{
         data: {
@@ -150,19 +163,7 @@ export async function getPatientReportData(
           lmp_date: string
           expected_due_date: string
           notes: string | null
-          pregnancy_measurements: {
-            measured_at: string
-            gestational_week: number | null
-            weight_kg: number | null
-            blood_pressure: string | null
-            fh: string | null
-            placenta: string | null
-            liquor: string | null
-            ua: string | null
-            hb: number | null
-            rbs: number | null
-            notes: string | null
-          }[]
+          pregnancy_measurements: PregnancyMeasurementRow[]
         }[] | null
         error: unknown
       }>,

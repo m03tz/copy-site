@@ -303,7 +303,8 @@
       "emergencyContactPhone": "هاتف جهة الاتصال في حالات الطوارئ",
       "notes": "ملاحظات",
       "patientCode": "رقم الملف",
-      "nickname": "الاسم المستعار"
+      "nickname": "الاسم المستعار",
+      "jobDescription": "الوظيفة"
     },
     "actions": {
       "save": "حفظ التغييرات",

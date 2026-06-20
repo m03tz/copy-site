@@ -37,6 +37,7 @@ export default async function SecretaryPatientProfilePage({
               emergency_contact_name: string | null
               emergency_contact_phone: string | null
               notes: string | null
+              job_description: string | null
             }
           | null
       } | null

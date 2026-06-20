@@ -303,7 +303,8 @@
       "emergencyContactPhone": "Emergency Contact Phone",
       "notes": "Notes",
       "patientCode": "File No.",
-      "nickname": "Nickname"
+      "nickname": "Nickname",
+      "jobDescription": "Job Description"
     },
     "actions": {
       "save": "Save Changes",

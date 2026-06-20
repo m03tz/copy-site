@@ -40,6 +40,7 @@ const updatePatientSchema = z.object({
   emergency_contact_name: z.string().optional(),
   emergency_contact_phone: z.string().optional(),
   notes: z.string().optional(),
+  job_description: z.string().optional(),
 })
 
 // ─── Actions ─────────────────────────────────────────────────────────────────
@@ -97,15 +98,15 @@ export async function searchPatients(
   if (query && query.trim().length > 0) {
     const q = query.trim()
 
-    // Pre-fetch patient IDs matching by patient_code or national_id (cross-table OR workaround)
+    // Pre-fetch patient IDs matching by patient_code, national_id, or job_description (cross-table OR workaround)
     const { data: codeMatches } = await supabase
       .from('patients')
       .select('id')
-      .or(`patient_code.ilike.%${q}%,national_id.ilike.%${q}%`) as { data: { id: string }[] | null }
+      .or(`patient_code.ilike.%${q}%,national_id.ilike.%${q}%,job_description.ilike.%${q}%`) as { data: { id: string }[] | null }
 
     const matchingIds = (codeMatches ?? []).map((p) => p.id)
 
-    // Build OR condition: name/phone on profiles table + IDs from patient_code/national_id match
+    // Build OR condition: name/phone on profiles table + IDs from cross-table match
     let orCondition = `full_name_ar.ilike.%${q}%,full_name_en.ilike.%${q}%,phone.ilike.%${q}%`
     if (matchingIds.length > 0) {
       orCondition += `,id.in.(${matchingIds.join(',')})`
@@ -178,11 +179,11 @@ export async function searchPatientsForCombobox(query: string): Promise<{
 
   const q = query.trim()
 
-  // Search patient_code and national_id in patients table
+  // Search patient_code, national_id, and job_description in patients table
   const { data: codeMatches } = await supabase
     .from('patients')
     .select('id')
-    .or(`patient_code.ilike.%${q}%,national_id.ilike.%${q}%`) as { data: { id: string }[] | null }
+    .or(`patient_code.ilike.%${q}%,national_id.ilike.%${q}%,job_description.ilike.%${q}%`) as { data: { id: string }[] | null }
 
   const matchingIds = (codeMatches ?? []).map((p) => p.id)
 
@@ -288,6 +289,7 @@ export async function updatePatientInfo(
     emergency_contact_name: (formData.get('emergency_contact_name') as string) || undefined,
     emergency_contact_phone: (formData.get('emergency_contact_phone') as string) || undefined,
     notes: (formData.get('notes') as string) || undefined,
+    job_description: (formData.get('job_description') as string) || undefined,
   }
 
   const validation = updatePatientSchema.safeParse(raw)
@@ -308,6 +310,7 @@ export async function updatePatientInfo(
     emergency_contact_name,
     emergency_contact_phone,
     notes,
+    job_description,
   } = validation.data
 
   // Use admin client to bypass RLS (avoids infinite recursion on profiles policies)
@@ -343,6 +346,7 @@ export async function updatePatientInfo(
       emergency_contact_name: emergency_contact_name ?? null,
       emergency_contact_phone: emergency_contact_phone ?? null,
       notes: notes ?? null,
+      job_description: job_description ?? null,
       ...(newPatientCode ? { patient_code: newPatientCode } : {}),
     })
     .eq('id', patient_id) as { error: { message: string } | null }

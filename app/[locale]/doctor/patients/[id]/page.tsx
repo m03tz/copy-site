@@ -44,6 +44,7 @@ export default async function DoctorPatientProfilePage({ params }: DoctorPatient
               emergency_contact_name: string | null
               emergency_contact_phone: string | null
               notes: string | null
+              job_description: string | null
               pmh: string | null
               psh: string | null
               pdh: string | null

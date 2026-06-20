@@ -35,6 +35,7 @@ interface PatientInfoData {
         emergency_contact_name: string | null
         emergency_contact_phone: string | null
         notes: string | null
+        job_description: string | null
       }
     | null
 }
@@ -112,7 +113,7 @@ export function PatientInfoForm({ patient }: PatientInfoFormProps) {
           <InfoField label={t('info.fullNameEn')} value={patient.full_name_en} />
           <InfoField label={t('info.nickname')} value={patientRecord?.nickname} />
           <InfoField label={t('info.phone')} value={patient.phone} dir="ltr" />
-          <InfoField label={t('info.email')} value={patient.email} />
+          <InfoField label={t('info.jobDescription')} value={patientRecord?.job_description} />
           <InfoField label={t('info.dateOfBirth')} value={patientRecord?.date_of_birth} />
           <InfoField label={t('info.bloodType')} value={patientRecord?.blood_type} />
           <InfoField label={t('info.nationalId')} value={patientRecord?.national_id} />
@@ -234,12 +235,10 @@ export function PatientInfoForm({ patient }: PatientInfoFormProps) {
             dir="ltr"
           />
         </FormField>
-        <FormField label={t('info.email')}>
+        <FormField label={t('info.jobDescription')}>
           <Input
-            name="email"
-            type="email"
-            defaultValue={patient.email ?? ''}
-            dir="ltr"
+            name="job_description"
+            defaultValue={patientRecord?.job_description ?? ''}
           />
         </FormField>
         <FormField label={t('info.dateOfBirth')}>

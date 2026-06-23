@@ -40,6 +40,7 @@ const updatePregnancySchema = z.object({
   lmp_date: z.string().min(1, 'LMP date is required'),
   baby_gender: z.string().optional(),
   notes: z.string().optional(),
+  edd_by_early_us: z.string().optional(),
 })
 
 const updatePregnancyStatusSchema = z.object({
@@ -209,6 +210,7 @@ export async function updatePregnancy(
     lmp_date: formData.get('lmp_date') as string,
     baby_gender: (formData.get('baby_gender') as string) || undefined,
     notes: (formData.get('notes') as string) || undefined,
+    edd_by_early_us: (formData.get('edd_by_early_us') as string) || undefined,
   }
 
   const validation = updatePregnancySchema.safeParse(raw)
@@ -216,7 +218,7 @@ export async function updatePregnancy(
     return { error: validation.error.flatten().fieldErrors as unknown as string }
   }
 
-  const { pregnancy_id, lmp_date, baby_gender, notes } = validation.data
+  const { pregnancy_id, lmp_date, baby_gender, notes, edd_by_early_us } = validation.data
 
   const { data: pregnancy, error: fetchError } = await supabase
     .from('pregnancies').select('patient_id').eq('id', pregnancy_id).single() as {
@@ -227,7 +229,12 @@ export async function updatePregnancy(
 
   const { error: updateError } = await supabase
     .from('pregnancies')
-    .update({ lmp_date, baby_gender: baby_gender ?? null, notes: notes ?? null })
+    .update({
+      lmp_date,
+      baby_gender: baby_gender ?? null,
+      notes: notes ?? null,
+      edd_by_early_us: edd_by_early_us ?? null,
+    })
     .eq('id', pregnancy_id)
 
   if (updateError) return { error: updateError.message }

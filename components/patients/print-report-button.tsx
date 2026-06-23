@@ -29,7 +29,7 @@ export function generateStyles(): string {
     .info-item { display: flex; gap: 8px; font-size: 18px; }
     .info-item .label { color: #666; min-width: 120px; }
     .info-item .value { font-weight: 600; }
-    .snapshot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    .snapshot-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
     .snapshot-card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; text-align: center; }
     .snapshot-card .snap-label { font-size: 18px; color: #666; margin-bottom: 4px; }
     .snapshot-card .snap-value { font-size: 18px; font-weight: 700; color: #0d7377; }
@@ -77,6 +77,11 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
     age: '\u0627\u0644\u0639\u0645\u0631',
     years: '\u0633\u0646\u0629',
     pregnanciesCount: '\u0639\u062f\u062f \u0627\u0644\u0627\u062d\u0645\u0627\u0644',
+    gravidaLabel: 'G',
+    paraLabel: 'P',
+    abortusLabel: 'A',
+    gaHeader: 'GA',
+    eddByEarlyUs: 'EDD by early US',
     medicalRecords: '\u0627\u0644\u0633\u062c\u0644\u0627\u062a \u0627\u0644\u0637\u0628\u064a\u0629',
     visit: '\u0632\u064a\u0627\u0631\u0629',
     date: '\u0627\u0644\u062a\u0627\u0631\u064a\u062e',
@@ -108,6 +113,11 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
     age: 'Age',
     years: 'years',
     pregnanciesCount: 'Pregnancies',
+    gravidaLabel: 'G',
+    paraLabel: 'P',
+    abortusLabel: 'A',
+    gaHeader: 'GA',
+    eddByEarlyUs: 'EDD by early US',
     medicalRecords: 'Medical Records',
     visit: 'visit',
     date: 'Date',
@@ -134,7 +144,24 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
     ageStr = `${age} ${l.years}`
   }
 
-  const COL_COUNT = 11
+  // Abortus = G - P - 1 (matches snapshot logic)
+  const abortusStr = patient.gravida !== null && patient.para !== null
+    ? String(Math.max(0, patient.gravida - patient.para - 1))
+    : '\u2014'
+
+  // \u2500\u2500 GA helper: weeks + days between LMP and measurement date \u2500\u2500
+  function computeGA(lmpDate: string, measuredAt: string): string {
+    const lmp = new Date(lmpDate)
+    const m = new Date(measuredAt)
+    if (isNaN(lmp.getTime()) || isNaN(m.getTime())) return '\u2014'
+    const diffDays = Math.floor((m.getTime() - lmp.getTime()) / 86400000)
+    if (diffDays < 0) return '\u2014'
+    const weeks = Math.floor(diffDays / 7)
+    const days = diffDays % 7
+    return `${weeks}w ${days}d`
+  }
+
+  const COL_COUNT = 12
   const pregnancyRows = pregnancies
     .map((p) => {
       const statusLabel = p.status === 'active' ? l.statusActive : p.status === 'completed' ? l.statusCompleted : p.status
@@ -144,6 +171,7 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
       const measurementRows = measurements.map((m, i) => `
         <tr style="background:${i % 2 === 0 ? '#fff' : '#f4f7ff'}">
           <td>${m.measured_at}</td>
+          <td style="text-align:center">${computeGA(p.lmp_date, m.measured_at)}</td>
           <td style="text-align:center">${m.blood_pressure ?? '\u2014'}</td>
           <td style="text-align:center">${m.fh ?? '\u2014'}</td>
           <td style="text-align:center">${m.placenta ?? '\u2014'}</td>
@@ -156,13 +184,18 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
           <td>${m.notes ?? '\u2014'}</td>
         </tr>`).join('')
 
+      // EDD by early US overrides the LMP-based EDD when present
+      const eddLabel = p.edd_by_early_us ? l.eddByEarlyUs : 'EDD'
+      const eddValue = p.edd_by_early_us ?? p.expected_due_date
+
       return `
       <tr style="background:#e8f5e9;font-weight:700">
-        <td colspan="${COL_COUNT}">${statusLabel} &nbsp;|&nbsp; LMP: ${p.lmp_date} &nbsp;|&nbsp; EDD: ${p.expected_due_date}${p.notes ? ` &nbsp;|&nbsp; ${p.notes}` : ''}</td>
+        <td colspan="${COL_COUNT}">${statusLabel} &nbsp;|&nbsp; LMP: ${p.lmp_date} &nbsp;|&nbsp; ${eddLabel}: ${eddValue}${p.notes ? ` &nbsp;|&nbsp; ${p.notes}` : ''}</td>
       </tr>
       ${measurements.length > 0 ? `
       <tr style="background:#0d7377;color:#fff;font-size:15px">
         <th>${isAr ? '\u0627\u0644\u062a\u0627\u0631\u064a\u062e' : 'Date'}</th>
+        <th style="text-align:center">${l.gaHeader}</th>
         <th style="text-align:center">${isAr ? '\u0636\u063a\u0637 \u0627\u0644\u062f\u0645' : 'BP'}</th>
         <th style="text-align:center">${isAr ? '\u0646\u0628\u0636\u0627\u062a \u0627\u0644\u062c\u0646\u064a\u0646' : 'Fetal Heart'}</th>
         <th style="text-align:center">${isAr ? '\u0627\u0644\u0645\u0634\u064a\u0645\u0629' : 'Placenta'}</th>
@@ -203,12 +236,16 @@ function generateReportHtml(data: PatientReportData, lang: 'ar' | 'en', baseUrl:
         <div class="snap-value">${ageStr}</div>
       </div>
       <div class="snapshot-card">
-        <div class="snap-label">${l.bloodType}</div>
-        <div class="snap-value">${patient.blood_type || '\u2014'}</div>
+        <div class="snap-label">${l.gravidaLabel}</div>
+        <div class="snap-value">${patient.gravida !== null ? patient.gravida : '\u2014'}</div>
       </div>
       <div class="snapshot-card">
-        <div class="snap-label">${l.pregnanciesCount}</div>
-        <div class="snap-value">${pregnancies.length}</div>
+        <div class="snap-label">${l.paraLabel}</div>
+        <div class="snap-value">${patient.para !== null ? patient.para : '\u2014'}</div>
+      </div>
+      <div class="snapshot-card">
+        <div class="snap-label">${l.abortusLabel}</div>
+        <div class="snap-value">${abortusStr}</div>
       </div>
     </div>
   </div>

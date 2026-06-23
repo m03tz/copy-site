@@ -178,6 +178,16 @@ export function PregnancyCard({ pregnancy, latestVitals }: PregnancyCardProps) {
                 <span>{format(new Date(pregnancy.expected_due_date), 'dd-MM-yyyy')}</span>
               </div>
 
+              {/* EDD by early US (optional override) */}
+              {pregnancy.edd_by_early_us && (
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground">EDD by early US:</span>
+                  <span className="font-medium">
+                    {format(new Date(pregnancy.edd_by_early_us), 'dd-MM-yyyy')}
+                  </span>
+                </div>
+              )}
+
               {/* Gestational week (active only) */}
               {isActive && gestationalWeek !== null && (
                 <div className="flex gap-2">
@@ -381,6 +391,16 @@ function EditPregnancyDialog({
               name="lmp_date"
               defaultValue={pregnancy.lmp_date}
               required
+            />
+          </div>
+
+          {/* EDD by early US */}
+          <div className="space-y-1">
+            <Label htmlFor="edit_edd_by_early_us">EDD by early US</Label>
+            <DatePickerInput
+              id="edit_edd_by_early_us"
+              name="edd_by_early_us"
+              defaultValue={pregnancy.edd_by_early_us ?? ''}
             />
           </div>
 

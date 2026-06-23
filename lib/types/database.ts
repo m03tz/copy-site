@@ -316,6 +316,7 @@ export interface Database {
           doctor_id: string
           lmp_date: string
           expected_due_date: string
+          edd_by_early_us: string | null
           status: PregnancyStatus
           baby_gender: string | null
           notes: string | null
@@ -328,6 +329,7 @@ export interface Database {
           doctor_id: string
           lmp_date: string
           expected_due_date?: string
+          edd_by_early_us?: string | null
           status?: PregnancyStatus
           baby_gender?: string | null
           notes?: string | null
@@ -340,6 +342,7 @@ export interface Database {
           doctor_id?: string
           lmp_date?: string
           expected_due_date?: string
+          edd_by_early_us?: string | null
           status?: PregnancyStatus
           baby_gender?: string | null
           notes?: string | null

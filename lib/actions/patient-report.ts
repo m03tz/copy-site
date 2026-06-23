@@ -15,6 +15,8 @@ export interface PatientReportData {
     emergency_contact_name: string | null
     emergency_contact_phone: string | null
     notes: string | null
+    gravida: number | null
+    para: number | null
   }
   visits: {
     visit_date: string
@@ -53,6 +55,7 @@ export interface PatientReportData {
     status: string
     lmp_date: string
     expected_due_date: string
+    edd_by_early_us: string | null
     notes: string | null
     pregnancy_measurements: PregnancyMeasurementRow[]
   }[]
@@ -125,6 +128,8 @@ export async function getPatientReportData(
             emergency_contact_name: string | null
             emergency_contact_phone: string | null
             notes: string | null
+            gravida: number | null
+            para: number | null
           } | null
         } | null
         error: unknown
@@ -155,13 +160,14 @@ export async function getPatientReportData(
 
     supabase
       .from('pregnancies')
-      .select('status, lmp_date, expected_due_date, notes, pregnancy_measurements(measured_at, gestational_week, weight_kg, blood_pressure, fh, placenta, liquor, ua, crl, bpd, fl, ac, efw, hb, plt, rbs, tsh_lab, ogtt_fasting, ogtt_1hr, ogtt_2hr, b_hcg, notes)')
+      .select('status, lmp_date, expected_due_date, edd_by_early_us, notes, pregnancy_measurements(measured_at, gestational_week, weight_kg, blood_pressure, fh, placenta, liquor, ua, crl, bpd, fl, ac, efw, hb, plt, rbs, tsh_lab, ogtt_fasting, ogtt_1hr, ogtt_2hr, b_hcg, notes)')
       .eq('patient_id', patientId)
       .order('created_at', { ascending: false }) as unknown as Promise<{
         data: {
           status: string
           lmp_date: string
           expected_due_date: string
+          edd_by_early_us: string | null
           notes: string | null
           pregnancy_measurements: PregnancyMeasurementRow[]
         }[] | null
@@ -216,6 +222,8 @@ export async function getPatientReportData(
         emergency_contact_name: patientRecord?.emergency_contact_name ?? null,
         emergency_contact_phone: patientRecord?.emergency_contact_phone ?? null,
         notes: patientRecord?.notes ?? null,
+        gravida: patientRecord?.gravida ?? null,
+        para: patientRecord?.para ?? null,
       },
       visits: visitsResult.data ?? [],
       infertilityRecords: infertilityResult.data ?? [],

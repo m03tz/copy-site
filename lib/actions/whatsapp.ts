@@ -1,4 +1,4 @@
-// ─── WhatsApp Cloud API Integration ──────────────────────────────────────────
+﻿// ─── WhatsApp Cloud API Integration ──────────────────────────────────────────
 // Uses Meta's WhatsApp Business Cloud API for sending appointment notifications.
 // Requires: WHATSAPP_TOKEN and WHATSAPP_PHONE_NUMBER_ID environment variables.
 //
@@ -47,7 +47,7 @@ ${introText} 📅
 
 إذا كنت بحاجة إلى إلغاء أو تغيير موعدك، يرجى التواصل معنا.
 
-هاتف العيادة: +962786637847`
+هاتف العيادة: +962786820988`
 }
 
 /**
@@ -70,7 +70,7 @@ export function buildCancellationMessage(params: {
 • الوقت: ${appointmentTime}
 
 للحجز مجدداً أو لأي استفسار، يرجى التواصل على:
-📞 +962786637847`
+📞 +962786820988`
 }
 
 /**
@@ -97,7 +97,7 @@ export function buildBookingConfirmationMessage(params: {
 
 سنرسل لك تذكيراً قبل الموعد.
 
-هاتف العيادة: +962786637847`
+هاتف العيادة: +962786820988`
 }
 
 // ─── WhatsApp API Functions ──────────────────────────────────────────────────

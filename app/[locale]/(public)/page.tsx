@@ -102,7 +102,7 @@ export default function HomePage() {
                 <ArrowRight className={`h-3.5 w-3.5 ${isRtl ? 'rotate-180' : ''}`} />
               </Link>
               <a
-                href="https://wa.me/962786637847"
+                href="https://wa.me/962786820988"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2.5 font-semibold text-sm px-7 py-3.5 rounded-full text-white transition-all hover:-translate-y-0.5"

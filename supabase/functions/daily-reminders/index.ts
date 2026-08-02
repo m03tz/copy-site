@@ -1,4 +1,4 @@
-// ─── Daily WhatsApp Appointment Reminders ─────────────────────────────────────
+﻿// ─── Daily WhatsApp Appointment Reminders ─────────────────────────────────────
 // Supabase Edge Function — triggered every day at 8:00 AM Amman time (05:00 UTC)
 // via pg_cron (see migration 00018_schedule_daily_reminders.sql).
 //
@@ -46,7 +46,7 @@ function buildSameDayReminder(params: {
 
  إذا كنتِ بحاجة للإلغاء أو التغيير، يرجى التواصل معنا.
 
-📞 هاتف العيادة: +962786637847`
+📞 هاتف العيادة: +962786820988`
 }
 
 // ─── Send WhatsApp message ────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import { getTranslations, getLocale } from 'next-intl/server'
+﻿import { getTranslations, getLocale } from 'next-intl/server'
 import Image from 'next/image'
 
 export async function Footer() {
@@ -56,7 +56,7 @@ export async function Footer() {
             </div>
             <ul className="flex flex-col gap-2.5">
               <li>
-                <a href="https://wa.me/962786637847" target="_blank" rel="noopener noreferrer"
+                <a href="https://wa.me/962786820988" target="_blank" rel="noopener noreferrer"
                   className="text-sm font-medium transition-colors hover:text-teal-400"
                   style={{ color: 'rgba(255,255,255,.65)', textDecoration: 'none' }} dir="ltr">
                   +962 7 8663 7847
@@ -71,7 +71,7 @@ export async function Footer() {
                 </span>
               </li>
               <li className="pt-1">
-                <a href="https://wa.me/962786637847" target="_blank" rel="noopener noreferrer"
+                <a href="https://wa.me/962786820988" target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center justify-center w-9 h-9 rounded-xl transition-all"
                   style={{ background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.08)', color: 'rgba(255,255,255,.5)' }}
                   title="WhatsApp">

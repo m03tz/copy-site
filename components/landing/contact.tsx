@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/routing'
@@ -50,7 +50,7 @@ export function Contact() {
                   {t('phone')}
                 </p>
                 <a
-                  href="https://wa.me/962786637847"
+                  href="https://wa.me/962786820988"
                   dir="ltr"
                   target="_blank"
                   rel="noopener noreferrer"

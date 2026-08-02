@@ -6,7 +6,7 @@ import { useRouter, usePathname } from '@/i18n/routing'
 import { useTheme } from 'next-themes'
 import { createClient } from '@/lib/supabase/client'
 import { patientLoginByFileNo } from '@/lib/actions/patient-login'
-import { staffLoginByPhone } from '@/lib/actions/staff-login'
+import { staffLoginByEmail } from '@/lib/actions/staff-login'
 import { Link } from '@/i18n/routing'
 import Image from 'next/image'
 
@@ -34,7 +34,7 @@ export default function LoginPage() {
   const [patientLoading, setPatientLoading] = useState(false)
 
   // Staff
-  const [staffPhone, setStaffPhone] = useState('')
+  const [staffPhone, setStaffPhone] = useState('') // now holds email
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [staffError, setStaffError] = useState('')
@@ -67,7 +67,7 @@ export default function LoginPage() {
     setStaffError('')
     setStaffLoading(true)
     try {
-      const result = await staffLoginByPhone(staffPhone.trim(), password)
+      const result = await staffLoginByEmail(staffPhone.trim(), password)
       if ('error' in result) { setStaffError(t(result.error)); return }
       router.push(`/${result.role}/dashboard`)
     } catch { setStaffError(t('loginFailed')) }
@@ -385,12 +385,12 @@ export default function LoginPage() {
             <form onSubmit={handleStaffLogin} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: labelColor, marginBottom: 7 }}>
-                  {isRtl ? 'رقم الهاتف' : t('phoneNumber')}
+                  {isRtl ? 'البريد الإلكتروني' : 'Email'}
                 </label>
                 <input
-                  type="tel"
+                  type="email"
                   dir="ltr"
-                  placeholder={t('phonePlaceholder')}
+                  placeholder="admin@example.com"
                   value={staffPhone}
                   onChange={(e) => setStaffPhone(e.target.value)}
                   required

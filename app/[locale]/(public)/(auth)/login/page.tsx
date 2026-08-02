@@ -385,12 +385,12 @@ export default function LoginPage() {
             <form onSubmit={handleStaffLogin} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: labelColor, marginBottom: 7 }}>
-                  {isRtl ? 'البريد الإلكتروني' : 'Email'}
+                  {isRtl ? 'اسم المستخدم أو البريد' : 'Username or Email'}
                 </label>
                 <input
-                  type="email"
+                  type="text"
                   dir="ltr"
-                  placeholder="admin@example.com"
+                  placeholder="admin"
                   value={staffPhone}
                   onChange={(e) => setStaffPhone(e.target.value)}
                   required

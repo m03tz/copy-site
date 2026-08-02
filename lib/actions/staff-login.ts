@@ -3,10 +3,26 @@
 import { createClient } from '@/lib/supabase/server'
 
 export async function staffLoginByEmail(
-  email: string,
+  identifier: string,
   password: string
 ): Promise<{ role: string } | { error: string }> {
-  if (!email.trim()) return { error: 'invalidCredentials' }
+  if (!identifier.trim()) return { error: 'invalidCredentials' }
+
+  let email = identifier.trim()
+
+  // If no @ — treat as username prefix and look up the full email
+  if (!email.includes('@')) {
+    const { createAdminClient } = await import('@/lib/supabase/admin')
+    const admin = createAdminClient()
+    const { data: profile } = await admin
+      .from('profiles')
+      .select('email')
+      .ilike('email', `${email}@%`)
+      .limit(1)
+      .single()
+    if (!profile?.email) return { error: 'invalidCredentials' }
+    email = profile.email
+  }
 
   const supabase = await createClient()
   const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
@@ -14,7 +30,6 @@ export async function staffLoginByEmail(
 
   const { createAdminClient } = await import('@/lib/supabase/admin')
   const admin = createAdminClient()
-
   const { data: profile, error: profileError } = await admin
     .from('profiles')
     .select('role')
@@ -26,5 +41,4 @@ export async function staffLoginByEmail(
   return { role: profile.role }
 }
 
-// Keep old export for backwards compat
 export { staffLoginByEmail as staffLoginByPhone }

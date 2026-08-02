@@ -155,7 +155,7 @@ export default function LoginPage() {
             boxShadow: '0 0 0 10px rgba(45,212,191,.12), 0 0 0 20px rgba(45,212,191,.06)',
           }}>
             <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden', background: '#1e3a8a' }}>
-              <Image src="/images/fadi.jpg" alt="Dr. Fadi" width={180} height={180} style={{ objectFit: 'cover', width: '100%', height: '100%' }} priority />
+              <Image src="/images/fadi.png" alt="Dr. Fadi" width={180} height={180} style={{ objectFit: 'cover', width: '100%', height: '100%' }} priority />
             </div>
           </div>
 

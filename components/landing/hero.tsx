@@ -17,7 +17,7 @@ export function Hero() {
         <div className="flex items-center justify-center gap-8 mb-12">
           <div className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-full overflow-hidden border-4 border-medical-blue-200 shadow-lg">
             <Image
-              src="/images/fadi.jpg"
+              src="/images/fadi.png"
               alt={t('clinicName')}
               fill
               className="object-cover"

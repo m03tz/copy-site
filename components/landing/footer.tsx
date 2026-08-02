@@ -16,7 +16,7 @@ export async function Footer() {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-full overflow-hidden border-2 shrink-0" style={{ borderColor: 'rgba(255,255,255,.2)' }}>
-                <Image src="/images/fadi.jpg" alt="Dr. Fadi" width={48} height={48} className="object-cover w-full h-full" />
+                <Image src="/images/fadi.png" alt="Dr. Fadi" width={48} height={48} className="object-cover w-full h-full" />
               </div>
               <span className="text-base font-extrabold text-white">{t('clinicName')}</span>
             </div>

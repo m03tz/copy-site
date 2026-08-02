@@ -126,7 +126,7 @@ export default function HomePage() {
               <div className="relative shrink-0"
                 style={{ width: 220, height: 220, borderRadius: '50%', background: 'linear-gradient(135deg, #2dd4bf, #3b82f6, #1e40af)', padding: 4, boxShadow: '0 0 0 10px rgba(45,212,191,.15), 0 0 0 20px rgba(45,212,191,.07)' }}>
                 <div className="w-full h-full rounded-full overflow-hidden">
-                  <Image src="/images/fadi.jpg" alt="Dr. Fadi Al-Sahleh" width={220} height={220} className="object-cover w-full h-full" priority />
+                  <Image src="/images/fadi.png" alt="Dr. Fadi Al-Sahleh" width={220} height={220} className="object-cover w-full h-full" priority />
                 </div>
               </div>
               {/* Clinic logo */}
@@ -192,7 +192,7 @@ export default function HomePage() {
             <div className="relative flex justify-center lg:justify-start">
               <div className="relative overflow-hidden shadow-xl"
                 style={{ width: '100%', maxWidth: 400, aspectRatio: '4/5', borderRadius: '40px 8px 40px 8px', background: 'linear-gradient(145deg, #dbeafe, #bfdbfe)' }}>
-                <Image src="/images/fadi.jpg" alt="Dr. Fadi Al-Sahleh" fill className="object-cover object-top" />
+                <Image src="/images/fadi.png" alt="Dr. Fadi Al-Sahleh" fill className="object-cover object-top" />
               </div>
             </div>
 
